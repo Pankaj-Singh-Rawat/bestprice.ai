@@ -283,10 +283,11 @@ async def _async_scrape(query):
 
 
 def get_product_data(query):
+    safe_q = urllib.parse.quote(query)
     results = {
-        "Amazon":           {"price": float('inf'), "display_price": "Not Found", "rating": "N/A", "link": "#", "title": "No exact match found"},
-        "Flipkart":         {"price": float('inf'), "display_price": "Not Found", "rating": "N/A", "link": "#", "title": "No exact match found"},
-        "Reliance Digital": {"price": float('inf'), "display_price": "Not Found", "rating": "N/A", "link": "#", "title": "No exact match found"},
+        "Amazon":           {"price": float('inf'), "display_price": "Not Found", "rating": "N/A", "link": f"https://www.amazon.in/s?k={safe_q}", "title": "No exact match found"},
+        "Flipkart":         {"price": float('inf'), "display_price": "Not Found", "rating": "N/A", "link": f"https://www.flipkart.com/search?q={safe_q}", "title": "No exact match found"},
+        "Reliance Digital": {"price": float('inf'), "display_price": "Not Found", "rating": "N/A", "link": f"https://www.reliancedigital.in/search?q={safe_q}", "title": "No exact match found"},
     }
 
     print(f"\n[Searching] {query}")
