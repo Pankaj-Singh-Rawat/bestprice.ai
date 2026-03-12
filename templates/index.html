@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BestPrice.ai — Find the lowest price instantly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #0d0f14;
+            --surface:   #161b24;
+            --surface2:  #1e2535;
+            --border:    #2a3347;
+            --accent:    #4fffb0;
+            --accent2:   #ffb84f;
+            --danger:    #ff4f6b;
+            --text:      #e8edf5;
+            --muted:     #6b7a99;
+            --amazon:    #ff9900;
+            --flipkart:  #2874f0;
+            --reliance:  #e91e1e;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 500px;
+            background: radial-gradient(ellipse, rgba(79,255,176,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── HEADER ─────────────────────────────────────────── */
+        header {
+            padding: 28px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.03em;
+            color: var(--text);
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-left: 4px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.7); }
+        }
+
+        .header-tag {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 5px 12px;
+            border-radius: 100px;
+        }
+
+        /* ── HERO ────────────────────────────────────────────── */
+        .hero {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 80px 24px 60px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            margin-bottom: 18px;
+            color: var(--text);
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--accent);
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 1.05rem;
+            font-weight: 300;
+            margin-bottom: 44px;
+            line-height: 1.6;
+        }
+
+        /* ── SEARCH BOX ──────────────────────────────────────── */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(79,255,176,0.08);
+        }
+
+        .search-icon {
+            padding: 0 18px;
+            color: var(--muted);
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+
+        .search-wrapper input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            padding: 18px 0;
+        }
+
+        .search-wrapper input::placeholder {
+            color: var(--muted);
+        }
+
+        .search-btn {
+            margin: 8px;
+            padding: 12px 28px;
+            background: var(--accent);
+            color: #0d0f14;
+            border: none;
+            border-radius: 9px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+
+        .search-btn:hover { background: #6bffbd; }
+        .search-btn:active { transform: scale(0.97); }
+
+        /* ── STORE PILLS ────────────────────────────────────── */
+        .store-pills {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.78rem;
+            color: var(--muted);
+            font-weight: 500;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 100px;
+        }
+
+        .pill-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        /* ── RESULTS ─────────────────────────────────────────── */
+        .results-section {
+            max-width: 820px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 10;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Query label */
+        .query-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .query-label span {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+
+        .query-label strong {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        /* Best price banner */
+        .best-banner {
+            background: linear-gradient(135deg, rgba(79,255,176,0.12) 0%, rgba(79,255,176,0.04) 100%);
+            border: 1px solid rgba(79,255,176,0.25);
+            border-radius: 14px;
+            padding: 20px 28px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .best-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .best-trophy {
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .best-banner-text small {
+            display: block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .best-banner-text strong {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+        }
+
+        .best-store-name {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .best-banner a {
+            background: var(--accent);
+            color: #0d0f14;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .best-banner a:hover { background: #6bffbd; }
+
+        /* Store cards */
+        .store-cards {
+            display: grid;
+            gap: 12px;
+        }
+
+        .store-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 26px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+
+        .store-card:hover {
+            border-color: var(--surface2);
+            transform: translateX(3px);
+        }
+
+        .store-card.winner {
+            border-color: rgba(79,255,176,0.3);
+            background: linear-gradient(135deg, rgba(79,255,176,0.05) 0%, var(--surface) 60%);
+        }
+
+        .store-logo-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 900;
+            flex-shrink: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-amazon  { background: rgba(255,153,0,0.12); color: var(--amazon); }
+        .logo-flipkart { background: rgba(40,116,240,0.12); color: var(--flipkart); }
+        .logo-reliance { background: rgba(233,30,30,0.12); color: var(--reliance); }
+
+        .store-info { flex: 1; min-width: 0; }
+
+        .store-name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .store-name-row h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .winner-chip {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            background: var(--accent);
+            color: #0d0f14;
+            padding: 2px 8px;
+            border-radius: 100px;
+        }
+
+        .product-title-text {
+            font-size: 0.82rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 340px;
+            margin-bottom: 8px;
+        }
+
+        .rating-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent2);
+            background: rgba(255,184,79,0.1);
+            border: 1px solid rgba(255,184,79,0.15);
+            padding: 3px 10px;
+            border-radius: 100px;
+        }
+
+        .rating-na { color: var(--muted); background: transparent; border-color: var(--border); }
+
+        .price-block {
+            text-align: right;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .price-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .price-value.found { color: var(--text); }
+        .price-value.not-found { color: var(--muted); font-size: 0.9rem; font-family: 'DM Sans', sans-serif; font-weight: 400; font-style: italic; }
+
+        .buy-btn {
+            display: inline-block;
+            padding: 7px 16px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .buy-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(79,255,176,0.05);
+        }
+
+        /* ── FOOTER ─────────────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 0.78rem;
+            color: var(--muted);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ── LOADING STATE ───────────────────────────────────── */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(13,15,20,0.85);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active { display: flex; }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .loading-sub {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: -10px;
+        }
+
+        @media (max-width: 600px) {
+            header { padding: 20px; }
+            .hero { padding: 50px 20px 40px; }
+            .store-card { flex-wrap: wrap; }
+            .price-block { text-align: left; align-items: flex-start; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Hunting prices across stores...</div>
+    <div class="loading-sub">Amazon · Flipkart · Reliance Digital</div>
+</div>
+
+<header>
+    <div class="logo">BestPrice<span>.ai</span><span class="logo-dot"></span></div>
+    <div class="header-tag">India Price Comparison</div>
+</header>
+
+<section class="hero">
+    <h1>Find the <em>lowest price</em><br>across every major store</h1>
+    <p>Search any product or paste a product link — we'll compare<br>Amazon, Flipkart and Reliance Digital instantly.</p>
+
+    <form class="search-wrapper" method="POST" action="/" id="searchForm">
+        <span class="search-icon">🔍</span>
+        <input
+            type="text"
+            name="product_name"
+            placeholder="e.g. Apple iPhone 15 128GB or paste a product link..."
+            value="{{ query if query else '' }}"
+            required
+            autocomplete="off"
+        >
+        <button type="submit" class="search-btn">Compare →</button>
+    </form>
+
+    <div class="store-pills">
+        <div class="pill"><span class="pill-dot" style="background:var(--amazon)"></span>Amazon.in</div>
+        <div class="pill"><span class="pill-dot" style="background:var(--flipkart)"></span>Flipkart</div>
+        <div class="pill"><span class="pill-dot" style="background:var(--reliance)"></span>Reliance Digital</div>
+    </div>
+</section>
+
+{% if results is defined %}
+<section class="results-section">
+
+    <div class="query-label">
+        <span>Results for</span>
+        <strong>"{{ query }}"</strong>
+    </div>
+
+    {% if results.best %}
+    <div class="best-banner">
+        <div class="best-banner-left">
+            <div class="best-trophy">🏆</div>
+            <div class="best-banner-text">
+                <small>Best Price Found</small>
+                <strong>{{ results.best.display_price }}</strong>
+                <div class="best-store-name">at {{ results.best.store }}</div>
+            </div>
+        </div>
+        <a href="{{ results.stores[results.best.store].link }}" target="_blank">Buy Now ↗</a>
+    </div>
+    {% endif %}
+
+    <div class="store-cards">
+
+        {# ── Amazon ── #}
+        {% set az = results.stores['Amazon'] %}
+        <div class="store-card {% if results.best and results.best.store == 'Amazon' %}winner{% endif %}">
+            <div class="store-logo-box logo-amazon">A</div>
+            <div class="store-info">
+                <div class="store-name-row">
+                    <h3>Amazon</h3>
+                    {% if results.best and results.best.store == 'Amazon' %}<span class="winner-chip">Best Price</span>{% endif %}
+                </div>
+                <div class="product-title-text">{{ az.title }}</div>
+                <span class="rating-badge {% if az.rating == 'N/A' %}rating-na{% endif %}">
+                    {% if az.rating != 'N/A' %}⭐{% endif %} {{ az.rating }}
+                </span>
+            </div>
+            <div class="price-block">
+                <span class="price-value {% if az.price == float('inf') %}not-found{% else %}found{% endif %}">
+                    {{ az.display_price }}
+                </span>
+                <a href="{{ az.link }}" target="_blank" class="buy-btn">View on Amazon ↗</a>
+            </div>
+        </div>
+
+        {# ── Flipkart ── #}
+        {% set fk = results.stores['Flipkart'] %}
+        <div class="store-card {% if results.best and results.best.store == 'Flipkart' %}winner{% endif %}">
+            <div class="store-logo-box logo-flipkart">F</div>
+            <div class="store-info">
+                <div class="store-name-row">
+                    <h3>Flipkart</h3>
+                    {% if results.best and results.best.store == 'Flipkart' %}<span class="winner-chip">Best Price</span>{% endif %}
+                </div>
+                <div class="product-title-text">{{ fk.title }}</div>
+                <span class="rating-badge {% if fk.rating == 'N/A' %}rating-na{% endif %}">
+                    {% if fk.rating != 'N/A' %}⭐{% endif %} {{ fk.rating }}
+                </span>
+            </div>
+            <div class="price-block">
+                <span class="price-value {% if fk.price == float('inf') %}not-found{% else %}found{% endif %}">
+                    {{ fk.display_price }}
+                </span>
+                <a href="{{ fk.link }}" target="_blank" class="buy-btn">View on Flipkart ↗</a>
+            </div>
+        </div>
+
+        {# ── Reliance Digital ── #}
+        {% set rd = results.stores['Reliance Digital'] %}
+        <div class="store-card {% if results.best and results.best.store == 'Reliance Digital' %}winner{% endif %}">
+            <div class="store-logo-box logo-reliance">R</div>
+            <div class="store-info">
+                <div class="store-name-row">
+                    <h3>Reliance Digital</h3>
+                    {% if results.best and results.best.store == 'Reliance Digital' %}<span class="winner-chip">Best Price</span>{% endif %}
+                </div>
+                <div class="product-title-text">{{ rd.title }}</div>
+                <span class="rating-badge {% if rd.rating == 'N/A' %}rating-na{% endif %}">
+                    {% if rd.rating != 'N/A' %}⭐{% endif %} {{ rd.rating }}
+                </span>
+            </div>
+            <div class="price-block">
+                <span class="price-value {% if rd.price == float('inf') %}not-found{% else %}found{% endif %}">
+                    {{ rd.display_price }}
+                </span>
+                <a href="{{ rd.link }}" target="_blank" class="buy-btn">View on Reliance ↗</a>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endif %}
+
+<footer>
+    BestPrice.ai — Price comparison for Indian shoppers &nbsp;·&nbsp; Prices scraped live, may vary slightly
+</footer>
+
+<script>
+    document.getElementById('searchForm').addEventListener('submit', function() {
+        document.getElementById('loadingOverlay').classList.add('active');
+    });
+</script>
+
+</body>
+</html>
