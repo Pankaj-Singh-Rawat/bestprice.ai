@@ -47,8 +47,11 @@ def is_correct_product(query, title):
         if num not in t_nums:
             return False
 
-    q_flat = q_lower.replace(" ", "")
-    t_flat = t_lower.replace(" ", "")
+    # Normalize storage: remove spaces so "2 TB" == "2tb", "512 GB" == "512gb"
+    q_flat = re.sub(r'(\d+)\s*(gb|tb)', lambda m: m.group(1)+m.group(2), q_lower)
+    q_flat = q_flat.replace(" ", "")
+    t_flat = re.sub(r'(\d+)\s*(gb|tb)', lambda m: m.group(1)+m.group(2), t_lower)
+    t_flat = t_flat.replace(" ", "")
     storages = ['64gb', '128gb', '256gb', '512gb', '1tb', '2tb']
     query_has_storage = any(s in q_flat for s in storages)
     for storage in storages:
