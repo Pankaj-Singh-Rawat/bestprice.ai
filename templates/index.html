@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BestPrice.ai — Find the Lowest Price in India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Clash+Display:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#03050a;
+  --surface:#080d18;
+  --glass:rgba(255,255,255,0.04);
+  --glass2:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.15);
+  --accent:#00f5ff;
+  --accent2:#ff006e;
+  --accent3:#ffbe0b;
+  --purple:#7c3aed;
+  --green:#00ff88;
+  --text:#f0f4ff;
+  --muted:#4a5878;
+  --muted2:#8892b0;
+  --amazon:#ff9900;
+  --flipkart:#2874f0;
+  --reliance:#e91e1e;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'Space Grotesk',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ═══════════════════════════════════════
+   CUSTOM CURSOR
+═══════════════════════════════════════ */
+.cursor{
+  position:fixed;
+  width:12px;height:12px;
+  background:var(--accent);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .15s,height .15s,background .15s;
+  mix-blend-mode:screen;
+}
+.cursor-ring{
+  position:fixed;
+  width:40px;height:40px;
+  border:1px solid rgba(0,245,255,0.4);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:transform .08s ease,width .2s,height .2s;
+}
+body:has(a:hover) .cursor,.cursor.hover{width:20px;height:20px;background:var(--accent2)}
+body:has(button:hover) .cursor{width:20px;height:20px;background:var(--accent3)}
+
+/* ═══════════════════════════════════════
+   CANVAS BACKGROUND
+═══════════════════════════════════════ */
+#bg-canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  opacity:0.6;
+}
+
+/* ═══════════════════════════════════════
+   FLOATING ORBS
+═══════════════════════════════════════ */
+.orb{
+  position:fixed;
+  border-radius:50%;
+  filter:blur(80px);
+  pointer-events:none;
+  z-index:0;
+  animation:orbfloat ease-in-out infinite;
+}
+.orb1{width:500px;height:500px;background:rgba(0,245,255,0.06);top:-100px;left:-100px;animation-duration:20s}
+.orb2{width:400px;height:400px;background:rgba(255,0,110,0.06);bottom:-100px;right:-100px;animation-duration:25s;animation-delay:-8s}
+.orb3{width:300px;height:300px;background:rgba(124,58,237,0.08);top:40%;left:60%;animation-duration:18s;animation-delay:-4s}
+
+@keyframes orbfloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(30px,-20px) scale(1.05)}
+  66%{transform:translate(-20px,30px) scale(0.95)}
+}
+
+/* ═══════════════════════════════════════
+   HEADER
+═══════════════════════════════════════ */
+header{
+  position:fixed;top:0;left:0;right:0;
+  z-index:100;
+  height:70px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;
+  background:rgba(3,5,10,0.7);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+}
+
+.logo{
+  font-family:'Orbitron',monospace;
+  font-weight:900;
+  font-size:1.4rem;
+  letter-spacing:0.1em;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.header-badges{display:flex;gap:10px;align-items:center}
+
+.hbadge{
+  font-size:0.65rem;
+  font-weight:600;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  padding:5px 12px;
+  border-radius:100px;
+  border:1px solid var(--border2);
+  backdrop-filter:blur(8px);
+}
+
+.hbadge-live{
+  background:rgba(0,255,136,0.1);
+  border-color:rgba(0,255,136,0.3);
+  color:var(--green);
+  display:flex;align-items:center;gap:6px;
+}
+
+.hbadge-live::before{
+  content:'';
+  width:6px;height:6px;
+  background:var(--green);
+  border-radius:50%;
+  animation:livepulse 1.5s ease-in-out infinite;
+  box-shadow:0 0 6px var(--green);
+}
+
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+
+.hbadge-stores{color:var(--muted2);background:var(--glass)}
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:100px 24px 60px;
+  position:relative;
+  z-index:10;
+  text-align:center;
+}
+
+.hero-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:0.7rem;
+  font-weight:600;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--accent);
+  background:rgba(0,245,255,0.08);
+  border:1px solid rgba(0,245,255,0.2);
+  padding:8px 20px;
+  border-radius:100px;
+  margin-bottom:36px;
+  opacity:0;
+  animation:revealUp .6s .1s ease forwards;
+}
+
+.hero-tag-icon{font-size:0.9rem}
+
+.hero-title{
+  font-family:'Orbitron',monospace;
+  font-weight:900;
+  font-size:clamp(3rem,9vw,7.5rem);
+  line-height:1;
+  letter-spacing:-0.02em;
+  margin-bottom:12px;
+  opacity:0;
+  animation:revealUp .7s .2s ease forwards;
+}
+
+.hero-title .t1{
+  display:block;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.hero-title .t2{
+  display:block;
+  background:linear-gradient(135deg,var(--accent),var(--purple),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradshift 4s ease-in-out infinite;
+  background-size:200% 200%;
+}
+
+@keyframes gradshift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+.hero-sub{
+  font-size:1.05rem;
+  color:var(--muted2);
+  font-weight:300;
+  max-width:500px;
+  line-height:1.8;
+  margin-bottom:52px;
+  opacity:0;
+  animation:revealUp .6s .35s ease forwards;
+}
+
+@keyframes revealUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════
+   SEARCH
+═══════════════════════════════════════ */
+.search-wrap{
+  width:100%;max-width:700px;
+  opacity:0;
+  animation:revealUp .6s .45s ease forwards;
+}
+
+.search-glow{
+  position:relative;
+  border-radius:16px;
+  padding:2px;
+  background:linear-gradient(135deg,var(--accent),var(--purple),var(--accent2));
+  background-size:200% 200%;
+  animation:gradshift 4s ease-in-out infinite;
+}
+
+.search-inner{
+  display:flex;
+  align-items:center;
+  background:#080d18;
+  border-radius:14px;
+  overflow:hidden;
+  height:68px;
+}
+
+.search-icon-wrap{
+  padding:0 20px;
+  font-size:1.2rem;
+  flex-shrink:0;
+  opacity:0.5;
+}
+
+.search-inner input{
+  flex:1;
+  background:transparent;
+  border:none;outline:none;
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:1rem;
+  font-weight:400;
+  padding:0 12px;
+  height:100%;
+}
+
+.search-inner input::placeholder{color:var(--muted)}
+
+.search-submit{
+  height:100%;
+  padding:0 36px;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  border:none;
+  color:#fff;
+  font-family:'Orbitron',monospace;
+  font-weight:700;
+  font-size:0.8rem;
+  letter-spacing:0.15em;
+  cursor:none;
+  transition:opacity .2s,transform .15s;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+
+.search-submit:hover{opacity:0.9}
+.search-submit:active{transform:scaleY(0.96)}
+
+.store-chips{
+  display:flex;gap:10px;justify-content:center;
+  margin-top:24px;flex-wrap:wrap;
+}
+
+.chip{
+  display:flex;align-items:center;gap:7px;
+  font-size:0.75rem;font-weight:500;
+  color:var(--muted2);
+  background:var(--glass);
+  border:1px solid var(--border);
+  padding:7px 16px;border-radius:100px;
+  backdrop-filter:blur(8px);
+  transition:border-color .2s,color .2s;
+}
+
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chipdot{width:7px;height:7px;border-radius:50%}
+
+/* ═══════════════════════════════════════
+   FLOATING PRICE BADGES (hero decoration)
+═══════════════════════════════════════ */
+.float-badges{
+  position:absolute;
+  inset:0;pointer-events:none;
+  overflow:hidden;
+}
+
+.fbadge{
+  position:absolute;
+  background:var(--glass);
+  border:1px solid var(--border2);
+  backdrop-filter:blur(12px);
+  border-radius:12px;
+  padding:10px 16px;
+  font-size:0.75rem;
+  font-weight:600;
+  color:var(--muted2);
+  animation:fbadgefloat ease-in-out infinite;
+  white-space:nowrap;
+}
+
+.fbadge span{color:var(--text);display:block;font-size:1rem;font-weight:700;margin-top:2px}
+
+.fbadge1{top:20%;left:5%;animation-duration:7s}
+.fbadge2{top:30%;right:5%;animation-duration:9s;animation-delay:-3s}
+.fbadge3{bottom:25%;left:8%;animation-duration:8s;animation-delay:-5s}
+.fbadge4{bottom:30%;right:6%;animation-duration:6s;animation-delay:-2s}
+
+@keyframes fbadgefloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+
+/* ═══════════════════════════════════════
+   RESULTS
+═══════════════════════════════════════ */
+.results-section{
+  position:relative;z-index:10;
+  padding:0 24px 120px;
+}
+
+.results-inner{max-width:1000px;margin:0 auto}
+
+/* Results header */
+.results-top{
+  text-align:center;
+  margin-bottom:60px;
+}
+
+.results-eyebrow{
+  font-size:0.7rem;font-weight:600;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--accent);
+  margin-bottom:12px;opacity:0.8;
+}
+
+.results-title{
+  font-family:'Orbitron',monospace;
+  font-weight:900;
+  font-size:clamp(1.8rem,4vw,3rem);
+  background:linear-gradient(135deg,#fff,rgba(255,255,255,0.6));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.results-title em{
+  font-style:normal;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+/* Best price banner */
+.best-banner{
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  padding:40px 48px;
+  margin-bottom:32px;
+  background:linear-gradient(135deg,rgba(0,245,255,0.08),rgba(124,58,237,0.08));
+  border:1px solid rgba(0,245,255,0.2);
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  flex-wrap:wrap;
+}
+
+.best-banner::before{
+  content:'';
+  position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 50%,rgba(0,245,255,0.1),transparent 60%);
+  pointer-events:none;
+}
+
+.best-banner::after{
+  content:'BEST DEAL';
+  position:absolute;right:-20px;top:50%;transform:translateY(-50%);
+  font-family:'Orbitron',monospace;font-weight:900;font-size:5rem;
+  color:rgba(255,255,255,0.03);letter-spacing:0.1em;
+  pointer-events:none;white-space:nowrap;
+}
+
+.best-left{display:flex;align-items:center;gap:20px}
+.best-icon{font-size:3rem;animation:trophybounce 2s ease-in-out infinite}
+@keyframes trophybounce{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-8px) rotate(5deg)}}
+
+.best-label{
+  font-size:0.68rem;font-weight:600;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:6px;
+}
+
+.best-price{
+  font-family:'Orbitron',monospace;
+  font-weight:900;
+  font-size:clamp(2.5rem,6vw,4rem);
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;margin-bottom:6px;
+}
+
+.best-store{font-size:0.9rem;color:var(--muted2)}
+.best-store strong{color:var(--text)}
+
+.best-cta{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 36px;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  color:#fff;font-family:'Orbitron',monospace;
+  font-weight:700;font-size:0.8rem;letter-spacing:0.12em;
+  text-decoration:none;border-radius:12px;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 0 30px rgba(0,245,255,0.2);
+  white-space:nowrap;
+}
+
+.best-cta:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 40px rgba(0,245,255,0.35);
+}
+
+/* ═══════════════════════════════════════
+   STORE CARDS — BIG PRODUCT IMAGE
+═══════════════════════════════════════ */
+.cards-grid{
+  display:grid;
+  gap:20px;
+}
+
+.scard{
+  position:relative;
+  border-radius:24px;
+  overflow:hidden;
+  background:var(--glass);
+  border:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .3s,box-shadow .3s;
+  display:grid;
+  grid-template-columns:220px 1fr auto;
+  align-items:stretch;
+  min-height:180px;
+}
+
+.scard:hover{
+  transform:translateY(-4px) scale(1.005);
+  border-color:var(--border2);
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+
+.scard.winner{
+  border-color:rgba(0,245,255,0.35);
+  background:linear-gradient(135deg,rgba(0,245,255,0.06),rgba(124,58,237,0.04));
+  box-shadow:0 0 40px rgba(0,245,255,0.1);
+}
+
+.scard.winner::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--purple),var(--accent));
+  background-size:200% 100%;
+  animation:shimmer 2s linear infinite;
+}
+
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* IMAGE PANEL — BIG */
+.scard-img{
+  position:relative;
+  overflow:hidden;
+  background:#0a0f1e;
+  display:flex;align-items:center;justify-content:center;
+  border-right:1px solid var(--border);
+}
+
+.scard-img img{
+  width:100%;height:100%;
+  object-fit:contain;
+  padding:20px;
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+}
+
+.scard:hover .scard-img img{transform:scale(1.08)}
+
+.img-placeholder{
+  width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;
+  color:var(--muted);
+}
+
+.img-placeholder-letter{
+  font-family:'Orbitron',monospace;font-weight:900;font-size:4rem;
+  opacity:0.15;
+}
+
+/* Store color accent on image bg */
+.scard-amazon .scard-img{background:linear-gradient(135deg,#0a0f1e,#160f00)}
+.scard-flipkart .scard-img{background:linear-gradient(135deg,#0a0f1e,#00080f)}
+.scard-reliance .scard-img{background:linear-gradient(135deg,#0a0f1e,#160000)}
+
+/* IMAGE GLOW */
+.scard-amazon.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,153,0,0.08),transparent 70%);pointer-events:none}
+.scard-flipkart.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(40,116,240,0.08),transparent 70%);pointer-events:none}
+.scard-reliance.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(233,30,30,0.08),transparent 70%);pointer-events:none}
+
+/* INFO PANEL */
+.scard-info{
+  padding:28px 32px;
+  display:flex;flex-direction:column;justify-content:center;gap:14px;
+}
+
+.scard-store-row{
+  display:flex;align-items:center;gap:10px;
+}
+
+.store-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+
+.scard-store-name{
+  font-size:0.72rem;font-weight:700;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted2);
+}
+
+.winner-badge{
+  font-size:0.58rem;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  color:#000;
+  padding:3px 10px;border-radius:100px;
+}
+
+.scard-title{
+  font-size:0.95rem;font-weight:500;
+  color:var(--text);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+.scard-title.not-found{color:var(--muted);font-style:italic;font-weight:300}
+
+.scard-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+.scard-rating{
+  display:flex;align-items:center;gap:5px;
+  font-size:0.78rem;font-weight:600;
+  color:var(--accent3);
+}
+
+.scard-rating.na{color:var(--muted)}
+
+/* PRICE PANEL */
+.scard-price-col{
+  padding:28px 32px;
+  display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
+  gap:14px;
+  border-left:1px solid var(--border);
+  min-width:180px;
+}
+
+.scard-price{
+  font-family:'Orbitron',monospace;
+  font-weight:900;
+  font-size:1.8rem;
+  line-height:1;
+  color:var(--text);
+  white-space:nowrap;
+}
+
+.scard-price.winner-p{
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.scard-price.nf{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.85rem;font-weight:300;font-style:italic;
+  color:var(--muted);
+}
+
+.scard-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 20px;
+  border-radius:8px;
+  border:1px solid var(--border2);
+  color:var(--muted2);
+  font-size:0.72rem;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;
+  text-decoration:none;
+  background:var(--glass);
+  backdrop-filter:blur(8px);
+  transition:all .2s;
+  white-space:nowrap;
+}
+
+.scard-btn:hover{
+  border-color:var(--accent);color:var(--accent);
+  background:rgba(0,245,255,0.06);
+  box-shadow:0 0 20px rgba(0,245,255,0.1);
+}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer{
+  position:relative;z-index:10;
+  border-top:1px solid var(--border);
+  padding:28px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+
+.footer-logo{
+  font-family:'Orbitron',monospace;font-weight:700;font-size:0.9rem;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.footer-note{font-size:0.72rem;color:var(--muted)}
+
+/* ═══════════════════════════════════════
+   LOADING
+═══════════════════════════════════════ */
+.loading-screen{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(3,5,10,0.95);
+  z-index:500;
+  align-items:center;justify-content:center;
+  flex-direction:column;gap:32px;
+  backdrop-filter:blur(16px);
+}
+
+.loading-screen.active{display:flex}
+
+.loading-ring{
+  position:relative;
+  width:100px;height:100px;
+}
+
+.loading-ring::before,.loading-ring::after{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:50%;
+  border:2px solid transparent;
+}
+
+.loading-ring::before{
+  border-top-color:var(--accent);
+  animation:spin 1s linear infinite;
+}
+
+.loading-ring::after{
+  inset:12px;
+  border-top-color:var(--purple);
+  animation:spin .7s linear infinite reverse;
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.loading-inner-dot{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.loading-inner-dot::after{
+  content:'';
+  width:16px;height:16px;
+  background:var(--accent);
+  border-radius:50%;
+  box-shadow:0 0 20px var(--accent);
+  animation:dotpulse 1s ease-in-out infinite;
+}
+
+@keyframes dotpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.5);opacity:0.5}}
+
+.loading-title{
+  font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;
+  letter-spacing:0.15em;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.loading-stores-wrap{display:flex;gap:20px;align-items:center}
+
+.lstore{
+  display:flex;align-items:center;gap:7px;
+  font-size:0.72rem;font-weight:500;
+  color:var(--muted2);letter-spacing:0.08em;
+}
+
+.lstore-dot{
+  width:7px;height:7px;border-radius:50%;
+  animation:storewave 1.5s ease-in-out infinite;
+}
+
+.lstore:nth-child(1) .lstore-dot{animation-delay:0s}
+.lstore:nth-child(2) .lstore-dot{animation-delay:.2s}
+.lstore:nth-child(3) .lstore-dot{animation-delay:.4s}
+
+@keyframes storewave{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(1.6);opacity:1}}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:768px){
+  header{padding:0 20px}
+  .scard{grid-template-columns:1fr;min-height:auto}
+  .scard-img{height:220px;border-right:none;border-bottom:1px solid var(--border)}
+  .scard-price-col{border-left:none;border-top:1px solid var(--border);flex-direction:row;justify-content:space-between;align-items:center;padding:20px 24px}
+  .scard-info{padding:20px 24px}
+  .float-badges{display:none}
+  .best-banner{padding:24px}
+  footer{padding:20px}
+  body{cursor:auto}
+  .cursor,.cursor-ring{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Canvas particles -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Floating orbs -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-ring"><div class="loading-inner-dot"></div></div>
+  <div class="loading-title">SCANNING PRICES</div>
+  <div class="loading-stores-wrap">
+    <div class="lstore"><span class="lstore-dot" style="background:var(--amazon)"></span>Amazon</div>
+    <div class="lstore"><span class="lstore-dot" style="background:var(--flipkart)"></span>Flipkart</div>
+    <div class="lstore"><span class="lstore-dot" style="background:var(--reliance)"></span>Reliance</div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">BEST<span style="opacity:1">PRICE</span>.AI</div>
+  <div class="header-badges">
+    <div class="hbadge hbadge-live">LIVE PRICES</div>
+    <div class="hbadge hbadge-stores">3 STORES</div>
+  </div>
+</header>
+
+<section class="hero">
+  <!-- Floating price decorations -->
+  <div class="float-badges">
+    <div class="fbadge fbadge1">Amazon.in<span>₹82,900</span></div>
+    <div class="fbadge fbadge2">Flipkart<span>₹79,999</span></div>
+    <div class="fbadge fbadge3">Reliance Digital<span>₹84,500</span></div>
+    <div class="fbadge fbadge4">You Save<span style="color:var(--green)">₹4,501</span></div>
+  </div>
+
+  <div class="hero-tag">
+    <span class="hero-tag-icon">⚡</span>
+    India's Fastest Price Comparison
+  </div>
+
+  <h1 class="hero-title">
+    <span class="t1">FIND THE</span>
+    <span class="t2">LOWEST PRICE</span>
+  </h1>
+
+  <p class="hero-sub">
+    Drop a product name or paste any store link.<br>
+    We'll hunt across Amazon, Flipkart & Reliance Digital<br>and surface the best deal — in seconds.
+  </p>
+
+  <div class="search-wrap">
+    <div class="search-glow">
+      <form class="search-inner" method="POST" action="/" id="searchForm">
+        <span class="search-icon-wrap">🔍</span>
+        <input
+          type="text"
+          name="product_name"
+          placeholder="iPhone 17 Pro · Samsung S25 · paste any link..."
+          value="{{ query if query else '' }}"
+          required autocomplete="off" spellcheck="false"
+        >
+        <button type="submit" class="search-submit">HUNT →</button>
+      </form>
+    </div>
+
+    <div class="store-chips">
+      <div class="chip"><span class="chipdot" style="background:var(--amazon)"></span>Amazon.in</div>
+      <div class="chip"><span class="chipdot" style="background:var(--flipkart)"></span>Flipkart</div>
+      <div class="chip"><span class="chipdot" style="background:var(--reliance)"></span>Reliance Digital</div>
+    </div>
+  </div>
+</section>
+
+{% if results is defined %}
+<section class="results-section">
+  <div class="results-inner">
+
+    <div class="results-top">
+      <div class="results-eyebrow">// Price comparison results</div>
+      <div class="results-title">Results for <em>"{{ query }}"</em></div>
+    </div>
+
+    {% if results.best %}
+    <div class="best-banner">
+      <div class="best-left">
+        <div class="best-icon">🏆</div>
+        <div>
+          <div class="best-label">Best Price Found</div>
+          <div class="best-price">{{ results.best.display_price }}</div>
+          <div class="best-store">at <strong>{{ results.best.store }}</strong></div>
+        </div>
+      </div>
+      <a href="{{ results.stores[results.best.store].link }}" target="_blank" class="best-cta">
+        BUY NOW ↗
+      </a>
+    </div>
+    {% endif %}
+
+    <div class="cards-grid">
+
+      {# ── AMAZON ── #}
+      {% set az = results.stores['Amazon'] %}
+      <div class="scard scard-amazon {% if results.best and results.best.store == 'Amazon' %}winner{% endif %}">
+        <div class="scard-img">
+          {% if az.image %}
+          <img src="{{ az.image }}" alt="{{ az.title }}" loading="lazy">
+          {% else %}
+          <div class="img-placeholder">
+            <div class="img-placeholder-letter" style="color:var(--amazon)">A</div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="scard-info">
+          <div class="scard-store-row">
+            <span class="store-dot" style="background:var(--amazon)"></span>
+            <span class="scard-store-name">Amazon.in</span>
+            {% if results.best and results.best.store == 'Amazon' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
+          </div>
+          <div class="scard-title {% if az.price == float('inf') %}not-found{% endif %}">{{ az.title }}</div>
+          <div class="scard-meta">
+            <div class="scard-rating {% if az.rating == 'N/A' %}na{% endif %}">
+              {% if az.rating != 'N/A' %}★ {{ az.rating }}{% else %}No rating{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="scard-price-col">
+          <div class="scard-price {% if az.price == float('inf') %}nf{% elif results.best and results.best.store == 'Amazon' %}winner-p{% endif %}">
+            {{ az.display_price }}
+          </div>
+          <a href="{{ az.link }}" target="_blank" class="scard-btn">View ↗</a>
+        </div>
+      </div>
+
+      {# ── FLIPKART ── #}
+      {% set fk = results.stores['Flipkart'] %}
+      <div class="scard scard-flipkart {% if results.best and results.best.store == 'Flipkart' %}winner{% endif %}">
+        <div class="scard-img">
+          {% if fk.image %}
+          <img src="{{ fk.image }}" alt="{{ fk.title }}" loading="lazy">
+          {% else %}
+          <div class="img-placeholder">
+            <div class="img-placeholder-letter" style="color:var(--flipkart)">F</div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="scard-info">
+          <div class="scard-store-row">
+            <span class="store-dot" style="background:var(--flipkart)"></span>
+            <span class="scard-store-name">Flipkart</span>
+            {% if results.best and results.best.store == 'Flipkart' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
+          </div>
+          <div class="scard-title {% if fk.price == float('inf') %}not-found{% endif %}">{{ fk.title }}</div>
+          <div class="scard-meta">
+            <div class="scard-rating {% if fk.rating == 'N/A' %}na{% endif %}">
+              {% if fk.rating != 'N/A' %}★ {{ fk.rating }}{% else %}No rating{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="scard-price-col">
+          <div class="scard-price {% if fk.price == float('inf') %}nf{% elif results.best and results.best.store == 'Flipkart' %}winner-p{% endif %}">
+            {{ fk.display_price }}
+          </div>
+          <a href="{{ fk.link }}" target="_blank" class="scard-btn">View ↗</a>
+        </div>
+      </div>
+
+      {# ── RELIANCE ── #}
+      {% set rd = results.stores['Reliance Digital'] %}
+      <div class="scard scard-reliance {% if results.best and results.best.store == 'Reliance Digital' %}winner{% endif %}">
+        <div class="scard-img">
+          {% if rd.image %}
+          <img src="{{ rd.image }}" alt="{{ rd.title }}" loading="lazy">
+          {% else %}
+          <div class="img-placeholder">
+            <div class="img-placeholder-letter" style="color:var(--reliance)">R</div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="scard-info">
+          <div class="scard-store-row">
+            <span class="store-dot" style="background:var(--reliance)"></span>
+            <span class="scard-store-name">Reliance Digital</span>
+            {% if results.best and results.best.store == 'Reliance Digital' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
+          </div>
+          <div class="scard-title {% if rd.price == float('inf') %}not-found{% endif %}">{{ rd.title }}</div>
+          <div class="scard-meta">
+            <div class="scard-rating {% if rd.rating == 'N/A' %}na{% endif %}">
+              {% if rd.rating != 'N/A' %}★ {{ rd.rating }}{% else %}No rating{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="scard-price-col">
+          <div class="scard-price {% if rd.price == float('inf') %}nf{% elif results.best and results.best.store == 'Reliance Digital' %}winner-p{% endif %}">
+            {{ rd.display_price }}
+          </div>
+          <a href="{{ rd.link }}" target="_blank" class="scard-btn">View ↗</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<footer>
+  <div class="footer-logo">BESTPRICE.AI</div>
+  <div class="footer-note">Prices scraped live · may vary slightly · not affiliated with any store</div>
+</footer>
+
+<script>
+// ── CUSTOM CURSOR
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+});
+
+function animRing(){
+  rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+// ── PARTICLE CANVAS
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W,H,particles=[];
+
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener('resize',resize);
+
+class Particle{
+  constructor(){this.reset()}
+  reset(){
+    this.x=Math.random()*W;
+    this.y=Math.random()*H;
+    this.vx=(Math.random()-.5)*.3;
+    this.vy=(Math.random()-.5)*.3;
+    this.r=Math.random()*1.5+.3;
+    this.alpha=Math.random()*.5+.1;
+    this.color=Math.random()<.5?'0,245,255':'124,58,237';
+  }
+  update(){
+    this.x+=this.vx; this.y+=this.vy;
+    if(this.x<0||this.x>W||this.y<0||this.y>H) this.reset();
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${this.color},${this.alpha})`;
+    ctx.fill();
+  }
+}
+
+// Create particles
+for(let i=0;i<120;i++) particles.push(new Particle());
+
+// Draw connections
+function drawLines(){
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120){
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle=`rgba(0,245,255,${(1-dist/120)*0.08})`;
+        ctx.lineWidth=.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  drawLines();
+  particles.forEach(p=>{p.update();p.draw()});
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── 3D CARD TILT
+document.querySelectorAll('.scard').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`translateY(-4px) scale(1.005) perspective(1000px) rotateX(${-y*4}deg) rotateY(${x*4}deg)`;
+  });
+  card.addEventListener('mouseleave',()=>{
+    card.style.transform='';
+  });
+});
+
+// ── LOADING
+document.getElementById('searchForm').addEventListener('submit',()=>{
+  document.getElementById('loadingScreen').classList.add('active');
+});
+
+// ── SCROLL REVEAL for cards
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting){
+      setTimeout(()=>{
+        e.target.style.opacity='1';
+        e.target.style.transform='translateY(0)';
+      },i*100);
+      obs.unobserve(e.target);
+    }
+  });
+},{threshold:.1});
+
+document.querySelectorAll('.scard,.best-banner').forEach(el=>{
+  el.style.opacity='0';
+  el.style.transform='translateY(40px)';
+  el.style.transition='opacity .6s ease,transform .6s cubic-bezier(.34,1.56,.64,1)';
+  obs.observe(el);
+});
+</script>
+</body>
+</html>
