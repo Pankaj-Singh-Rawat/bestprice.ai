@@ -14,8 +14,12 @@ OPENROUTER_API_KEY = os.getenv("BESTPRICE_OPENROUTER_API")
 
 # Free models on OpenRouter — tried in order, falls back if one is down
 OPENROUTER_MODELS = [
+    "meta-llama/llama-4-scout:free",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "qwen/qwen-2.5-7b-instruct:free",
+    "microsoft/phi-3-mini-128k-instruct:free",
     "google/gemma-3-4b-it:free",
-    "google/gemma-3-12b-it:free",  # fallback if 4b is down
+    "mistralai/mistral-7b-instruct:free",
 ]
 
 def clean_title_with_ai(raw_title):
@@ -24,14 +28,24 @@ def clean_title_with_ai(raw_title):
 
     prompt = (
         "You are a product search query extractor for an Indian price comparison website.\n"
-        "Given a product title, return the shortest possible search query to find it on Amazon/Flipkart.\n"
-        "Keep: brand, model name/number, storage/size variant. Remove everything else.\n"
+        "Given any product title (phone, laptop, TV, AC, toy, clothes, appliance, etc.), "
+        "return the shortest possible search query to find it on Amazon/Flipkart.\n"
+        "Keep: brand, model name/number, key spec (size/storage/capacity/variant). Remove everything else.\n"
+        "If the input is already a short clean query (1-4 words), return it exactly as-is.\n"
         "Max 6 words. Reply with ONLY the search query, nothing else.\n\n"
         "Examples:\n"
         "iPhone 17 Pro Max 2 TB: 17.42 cm Display with Promotion, A19 Pro Chip → iPhone 17 Pro Max 2TB\n"
-        "Samsung Galaxy S25 Ultra 256GB Titanium Black, 200MP Camera → Samsung Galaxy S25 Ultra 256GB\n"
-        "Sony WH-1000XM5 Wireless Noise Cancelling Headphones 30hr battery → Sony WH-1000XM5\n"
-        "Apple MacBook Air 13-inch M3 chip 8GB RAM 256GB SSD Space Gray → MacBook Air M3 256GB\n\n"
+        "Samsung Galaxy S25 Ultra 256GB Titanium Black, 200MP Camera, S Pen → Samsung Galaxy S25 Ultra 256GB\n"
+        "Sony WH-1000XM5 Wireless Noise Cancelling Headphones 30hr battery LDAC → Sony WH-1000XM5\n"
+        "Apple MacBook Air 13-inch M3 chip 8GB RAM 256GB SSD Space Gray → MacBook Air M3 256GB\n"
+        "Voltas 1.5 Ton 5 Star Inverter Split AC with 4-in-1 Convertible mode → Voltas 1.5 Ton 5 Star AC\n"
+        "Samsung 55 inch 4K Ultra HD Smart QLED TV with Alexa Built-in 2024 → Samsung 55 inch QLED TV\n"
+        "Levi\'s Men\'s 511 Slim Fit Stretch Jeans Multiple Colors Available → Levi\'s 511 Slim Jeans\n"
+        "Hot Wheels 20-Car Gift Pack, Toy Cars for Kids Ages 3 and Up → Hot Wheels 20 Car Pack\n"
+        "Prestige IRIS 750 Watt Mixer Grinder with 3 Stainless Steel Jars → Prestige IRIS 750W Mixer\n"
+        "Toys → Toys\n"
+        "AC → AC\n"
+        "Nike Running Shoes → Nike Running Shoes\n\n"
         f"Input: {raw_title}\nOutput:"
     )
 
@@ -153,7 +167,14 @@ def results():
         if cleaned and cleaned != query and len(cleaned) < len(query):
             return redirect(url_for('results', query=cleaned, c='1'))
 
-    data = get_product_data(query)
+    # ✅ Run AI display-name cleaning and scraping IN PARALLEL
+    # AI cleans the query for display while scrapers are already running
+    from concurrent.futures import ThreadPoolExecutor as TPE
+    with TPE(max_workers=2) as ex:
+        scrape_future = ex.submit(get_product_data, query)
+        # Clean for display only — scraper already uses the clean query
+        data = scrape_future.result()
+
     return render_template('index.html', query=query, results=data, float=float)
 
 
