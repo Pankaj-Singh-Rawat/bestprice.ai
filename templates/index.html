@@ -27,7 +27,7 @@
   --amazon:#ff9900;
   --flipkart:#2874f0;
   --reliance:#e91e1e;
-  --tatacliq:#9b2248;
+  --croma:#6ec72d;
   --vijay:#e8342a;
 }
 
@@ -127,13 +127,13 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .scard-amazon .scard-img{background:linear-gradient(135deg,#0a0f1e,#160f00)}
 .scard-flipkart .scard-img{background:linear-gradient(135deg,#0a0f1e,#00080f)}
 .scard-reliance .scard-img{background:linear-gradient(135deg,#0a0f1e,#160000)}
-.scard-tatacliq .scard-img{background:linear-gradient(135deg,#0a0f1e,#1a0010)}
+.scard-croma .scard-img{background:linear-gradient(135deg,#0a0f1e,#001a00)}
 .scard-vijay .scard-img{background:linear-gradient(135deg,#0a0f1e,#160500)}
 
 .scard-amazon.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,153,0,0.08),transparent 70%);pointer-events:none}
 .scard-flipkart.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(40,116,240,0.08),transparent 70%);pointer-events:none}
 .scard-reliance.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(233,30,30,0.08),transparent 70%);pointer-events:none}
-.scard-tatacliq.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(155,34,72,0.1),transparent 70%);pointer-events:none}
+.scard-croma.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(110,199,45,0.08),transparent 70%);pointer-events:none}
 .scard-vijay.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(232,52,42,0.08),transparent 70%);pointer-events:none}
 
 .scard-info{padding:28px 32px;display:flex;flex-direction:column;justify-content:center;gap:14px}
@@ -209,7 +209,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
     <div class="lstore"><span class="lstore-dot" style="background:var(--amazon)"></span>Amazon</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--flipkart)"></span>Flipkart</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--reliance)"></span>Reliance</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--tatacliq)"></span>Tata Cliq</div>
+    <div class="lstore"><span class="lstore-dot" style="background:var(--croma)"></span>Croma</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--vijay)"></span>Vijay Sales</div>
   </div>
 </div>
@@ -242,7 +242,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
 
   <p class="hero-sub">
     Drop a product name or paste any store link.<br>
-    We hunt across 5 major Indian stores<br>and surface the best deal — in seconds.
+    We hunt across Amazon, Flipkart, Reliance,<br>Croma & Vijay Sales<br>and surface the best deal — in seconds.
   </p>
 
   <div class="search-wrap">
@@ -260,7 +260,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
       <div class="chip"><span class="chipdot" style="background:var(--amazon)"></span>Amazon.in</div>
       <div class="chip"><span class="chipdot" style="background:var(--flipkart)"></span>Flipkart</div>
       <div class="chip"><span class="chipdot" style="background:var(--reliance)"></span>Reliance Digital</div>
-      <div class="chip"><span class="chipdot" style="background:var(--tatacliq)"></span>Tata Cliq</div>
+      <div class="chip"><span class="chipdot" style="background:var(--croma)"></span>Croma</div>
       <div class="chip"><span class="chipdot" style="background:var(--vijay)"></span>Vijay Sales</div>
     </div>
   </div>
@@ -356,25 +356,25 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
         </div>
       </div>
 
-      {# ── TATA CLIQ ── #}
-      {% set tc = results.stores['Tata Cliq'] %}
-      <div class="scard scard-tatacliq {% if results.best and results.best.store == 'Tata Cliq' %}winner{% endif %}">
+      {# ── CROMA ── #}
+      {% set cr = results.stores['Croma'] %}
+      <div class="scard scard-croma {% if results.best and results.best.store == 'Croma' %}winner{% endif %}">
         <div class="scard-img">
-          {% if tc.image %}<img src="{{ tc.image }}" alt="{{ tc.title }}" loading="lazy">
-          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--tatacliq)">T</div></div>{% endif %}
+          {% if cr.image %}<img src="{{ cr.image }}" alt="{{ cr.title }}" loading="lazy">
+          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--croma)">C</div></div>{% endif %}
         </div>
         <div class="scard-info">
           <div class="scard-store-row">
-            <span class="store-dot" style="background:var(--tatacliq)"></span>
-            <span class="scard-store-name">Tata Cliq</span>
-            {% if results.best and results.best.store == 'Tata Cliq' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
+            <span class="store-dot" style="background:var(--croma)"></span>
+            <span class="scard-store-name">Croma</span>
+            {% if results.best and results.best.store == 'Croma' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
           </div>
-          <div class="scard-title {% if tc.price == float('inf') %}not-found{% endif %}">{{ tc.title }}</div>
-          <div class="scard-meta"><div class="scard-rating na">No rating</div></div>
+          <div class="scard-title {% if cr.price == float('inf') %}not-found{% endif %}">{{ cr.title }}</div>
+          <div class="scard-meta"><div class="scard-rating {% if cr.rating == 'N/A' %}na{% endif %}">{% if cr.rating != 'N/A' %}★ {{ cr.rating }}{% else %}No rating{% endif %}</div></div>
         </div>
         <div class="scard-price-col">
-          <div class="scard-price {% if tc.price == float('inf') %}nf{% elif results.best and results.best.store == 'Tata Cliq' %}winner-p{% endif %}">{{ tc.display_price }}</div>
-          <a href="{{ tc.link }}" target="_blank" class="scard-btn">View ↗</a>
+          <div class="scard-price {% if cr.price == float('inf') %}nf{% elif results.best and results.best.store == 'Croma' %}winner-p{% endif %}">{{ cr.display_price }}</div>
+          <a href="{{ cr.link }}" target="_blank" class="scard-btn">View ↗</a>
         </div>
       </div>
 
