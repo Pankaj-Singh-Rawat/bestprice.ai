@@ -501,20 +501,17 @@ def get_product_data(query):
         "Croma":            {"price": float('inf'), "display_price": "Not Found", "rating": "N/A",
                              "link": f"https://www.croma.com/searchB?q={safe_q}%3Arelevance",
                              "title": "No exact match found", "image": ""},
-        "Vijay Sales":      {"price": float('inf'), "display_price": "Not Found", "rating": "N/A",
-                             "link": f"https://www.vijaysales.com/search?q={safe_q}",
-                             "title": "No exact match found", "image": ""},
+
     }
 
     print(f"\n[Searching] {query}")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
             executor.submit(scrape_amazon, query):     "Amazon",
             executor.submit(scrape_flipkart, query):   "Flipkart",
             executor.submit(scrape_reliance, query):   "Reliance Digital",
             executor.submit(scrape_croma, query):      "Croma",
-            executor.submit(scrape_vijaysales, query): "Vijay Sales",
         }
         for future in as_completed(futures):
             store = futures[future]

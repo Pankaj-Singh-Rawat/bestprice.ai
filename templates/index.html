@@ -28,7 +28,6 @@
   --flipkart:#2874f0;
   --reliance:#e91e1e;
   --croma:#6ec72d;
-  --vijay:#e8342a;
 }
 
 html{scroll-behavior:smooth}
@@ -128,13 +127,11 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .scard-flipkart .scard-img{background:linear-gradient(135deg,#0a0f1e,#00080f)}
 .scard-reliance .scard-img{background:linear-gradient(135deg,#0a0f1e,#160000)}
 .scard-croma .scard-img{background:linear-gradient(135deg,#0a0f1e,#001a00)}
-.scard-vijay .scard-img{background:linear-gradient(135deg,#0a0f1e,#160500)}
 
 .scard-amazon.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,153,0,0.08),transparent 70%);pointer-events:none}
 .scard-flipkart.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(40,116,240,0.08),transparent 70%);pointer-events:none}
 .scard-reliance.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(233,30,30,0.08),transparent 70%);pointer-events:none}
 .scard-croma.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(110,199,45,0.08),transparent 70%);pointer-events:none}
-.scard-vijay.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(232,52,42,0.08),transparent 70%);pointer-events:none}
 
 .scard-info{padding:28px 32px;display:flex;flex-direction:column;justify-content:center;gap:14px}
 .scard-store-row{display:flex;align-items:center;gap:10px}
@@ -176,7 +173,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
 .lstore:nth-child(2) .lstore-dot{animation-delay:.2s}
 .lstore:nth-child(3) .lstore-dot{animation-delay:.4s}
 .lstore:nth-child(4) .lstore-dot{animation-delay:.6s}
-.lstore:nth-child(5) .lstore-dot{animation-delay:.8s}
+
 @keyframes storewave{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(1.6);opacity:1}}
 
 @media(max-width:768px){
@@ -210,7 +207,6 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
     <div class="lstore"><span class="lstore-dot" style="background:var(--flipkart)"></span>Flipkart</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--reliance)"></span>Reliance</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--croma)"></span>Croma</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--vijay)"></span>Vijay Sales</div>
   </div>
 </div>
 
@@ -218,7 +214,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
   <div class="logo">BEST<span style="opacity:1">PRICE</span>.AI</div>
   <div class="header-badges">
     <div class="hbadge hbadge-live">LIVE PRICES</div>
-    <div class="hbadge hbadge-stores">5 STORES</div>
+    <div class="hbadge hbadge-stores">4 STORES</div>
   </div>
 </header>
 
@@ -242,7 +238,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
 
   <p class="hero-sub">
     Drop a product name or paste any store link.<br>
-    We hunt across Amazon, Flipkart, Reliance,<br>Croma & Vijay Sales<br>and surface the best deal — in seconds.
+    We hunt across Amazon, Flipkart, Reliance Digital<br>&amp; Croma — and surface the best deal in seconds.
   </p>
 
   <div class="search-wrap">
@@ -261,7 +257,6 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
       <div class="chip"><span class="chipdot" style="background:var(--flipkart)"></span>Flipkart</div>
       <div class="chip"><span class="chipdot" style="background:var(--reliance)"></span>Reliance Digital</div>
       <div class="chip"><span class="chipdot" style="background:var(--croma)"></span>Croma</div>
-      <div class="chip"><span class="chipdot" style="background:var(--vijay)"></span>Vijay Sales</div>
     </div>
   </div>
 </section>
@@ -378,29 +373,8 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
         </div>
       </div>
 
-      {# ── VIJAY SALES ── #}
-      {% set vs = results.stores['Vijay Sales'] %}
-      <div class="scard scard-vijay {% if results.best and results.best.store == 'Vijay Sales' %}winner{% endif %}">
-        <div class="scard-img">
-          {% if vs.image %}<img src="{{ vs.image }}" alt="{{ vs.title }}" loading="lazy">
-          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--vijay)">V</div></div>{% endif %}
-        </div>
-        <div class="scard-info">
-          <div class="scard-store-row">
-            <span class="store-dot" style="background:var(--vijay)"></span>
-            <span class="scard-store-name">Vijay Sales</span>
-            {% if results.best and results.best.store == 'Vijay Sales' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
-          </div>
-          <div class="scard-title {% if vs.price == float('inf') %}not-found{% endif %}">{{ vs.title }}</div>
-          <div class="scard-meta"><div class="scard-rating na">No rating</div></div>
-        </div>
-        <div class="scard-price-col">
-          <div class="scard-price {% if vs.price == float('inf') %}nf{% elif results.best and results.best.store == 'Vijay Sales' %}winner-p{% endif %}">{{ vs.display_price }}</div>
-          <a href="{{ vs.link }}" target="_blank" class="scard-btn">View ↗</a>
-        </div>
-      </div>
-
     </div>
+  </div>
   </div>
 </section>
 {% endif %}
