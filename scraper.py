@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import random
 import os
+from curl_cffi import requests as cffi_requests
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -15,6 +16,115 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 ]
 
+# ─────────────────────────────────────────────
+# CATEGORY MAPPINGS (strict keyword matching)
+# ─────────────────────────────────────────────
+
+GENERIC_CATEGORIES = {
+    "phone": ["phone", "mobile", "smartphone", "cellphone"],
+    "tv": ["tv", "television", "led", "lcd", "oled", "qled", "ultra hd"],
+    "laptop": ["laptop", "notebook"],
+    "ac": ["ac", "air conditioner", "aircon", "inverter ac"],
+    "refrigerator": ["refrigerator", "fridge", "freezer"],
+    "washing machine": ["washing machine", "washer", "fully automatic"],
+    "headphones": ["headphones", "earphones", "earbuds", "neckband"],
+    "smartwatch": ["smartwatch", "smart watch", "fitness tracker"],
+    "tablet": ["tablet", "ipad", "android pad"],
+    "monitor": ["monitor", "display", "screen"],
+    "printer": ["printer", "all-in-one", "inkjet", "laser printer"],
+    "microwave": ["microwave", "microwave oven"],
+    "mixer": ["mixer", "mixer grinder", "juicer"],
+    "fan": ["fan", "ceiling fan", "pedestal fan", "table fan"],
+    "cooler": ["cooler", "air cooler", "desert cooler"],
+    "geyser": ["geyser", "water heater"],
+    "iron": ["iron", "garment steamer", "press"],
+    "vacuum cleaner": ["vacuum cleaner", "vacuum", "cleaner", "robot vacuum"],
+    "trimmer": ["trimmer", "hair trimmer", "beard trimmer"],
+    "shaver": ["shaver", "electric shaver", "razor"],
+    "kettle": ["kettle", "electric kettle"],
+    "toaster": ["toaster", "bread toaster"],
+    "induction cooktop": ["induction", "induction cooktop", "induction stove"],
+    "samsung galaxy": ["samsung galaxy"],
+    "iphone": ["iphone"],
+    "oneplus": ["oneplus"],
+    "pixel": ["pixel", "google pixel"],
+    "realme": ["realme"],
+    "redmi": ["redmi", "xiaomi"],
+    "oppo": ["oppo"],
+    "vivo": ["vivo"],
+    "motorola": ["motorola", "moto"],
+    "nokia": ["nokia"],
+    "asus": ["asus"],
+    "nothing": ["nothing phone"],
+}
+
+def is_generic_category(query):
+    q_lower = query.lower().strip()
+    for cat in GENERIC_CATEGORIES:
+        if q_lower == cat or q_lower.startswith(cat) or cat in q_lower.split():
+            return True
+    if len(q_lower.split()) <= 4 and not any(char.isdigit() for char in q_lower):
+        known_brands = ['iphone', 'samsung', 'oneplus', 'pixel', 'realme', 'redmi',
+                        'xiaomi', 'oppo', 'vivo', 'motorola', 'nokia', 'asus', 'nothing']
+        if not any(brand in q_lower for brand in known_brands):
+            return True
+    return False
+
+def is_correct_product(query, title):
+    if not query or not title:
+        return False
+    q_lower = query.lower()
+    t_lower = title.lower()
+
+    # Accessories filter
+    accessories = ['case', 'cover', 'glass', 'protector', 'cable', 'charger',
+                   'adapter', 'skin', 'stand', 'mount', 'holder', 'pouch',
+                   'sleeve', 'bumper', 'shield', 'wrap', 'film', 'foil', 'housing',
+                   'sticker', 'decal', 'toy model', 'miniature', 'installation service']
+    if not any(a in q_lower for a in accessories):
+        if any(a in t_lower for a in accessories):
+            return False
+
+    # Brand enforcement
+    key_brands = ['iphone', 'samsung', 'oneplus', 'pixel', 'realme', 'redmi',
+                  'xiaomi', 'oppo', 'vivo', 'motorola', 'nokia', 'sony', 'asus', 'nothing']
+    for brand in key_brands:
+        if brand in q_lower and brand not in t_lower:
+            return False
+
+    # Generic query handling
+    if is_generic_category(q_lower):
+        matched_category = None
+        for cat, keywords in GENERIC_CATEGORIES.items():
+            if cat in q_lower or any(kw in q_lower for kw in keywords):
+                matched_category = keywords
+                break
+        if matched_category:
+            if any(kw in t_lower for kw in matched_category):
+                return True
+            # Fallback: check common words or numbers
+            q_words = set(re.findall(r'\b[a-z0-9]+\b', q_lower))
+            t_words = set(re.findall(r'\b[a-z0-9]+\b', t_lower))
+            common = {w for w in q_words.intersection(t_words) if len(w) > 2}
+            if common:
+                return True
+            q_nums = re.findall(r'\d+', q_lower)
+            t_nums = re.findall(r'\d+', t_lower)
+            if set(q_nums).intersection(t_nums):
+                return True
+            print(f"    [Filter] Generic '{query}' – no match: {title[:50]}")
+            return False
+        else:
+            # No category known – accept if any common word
+            q_words = set(re.findall(r'\b[a-z0-9]+\b', q_lower))
+            t_words = set(re.findall(r'\b[a-z0-9]+\b', t_lower))
+            if q_words.intersection(t_words):
+                return True
+            print(f"    [Filter] Generic '{query}' – no common words: {title[:50]}")
+            return False
+
+    # Specific query – accept
+    return True
 
 # ─────────────────────────────────────────────
 # HELPERS
@@ -26,55 +136,16 @@ def clean_price(price_str):
     cleaned = re.sub(r'[^\d.]', '', str(price_str))
     try:
         val = float(cleaned)
-        return val if val > 0 else float('inf')
-    except Exception:
+        return val if val > 10 else float('inf')
+    except:
         return float('inf')
 
-
-def is_correct_product(query, title):
-    q_lower = query.lower()
-    t_lower = title.lower()
-
-    accessories = ['case', 'cover', 'glass', 'protector', 'cable', 'charger',
-                   'adapter', 'skin', 'stand', 'mount', 'holder', 'pouch',
-                   'sleeve', 'bumper', 'shield', 'wrap', 'film', 'foil', 'housing']
-    if not any(a in q_lower for a in accessories):
-        if any(a in t_lower for a in accessories):
-            return False
-
-    key_brands = ['iphone', 'samsung', 'oneplus', 'pixel', 'realme', 'redmi',
-                  'xiaomi', 'oppo', 'vivo', 'motorola', 'nokia', 'sony', 'asus', 'nothing']
-    for brand in key_brands:
-        if brand in q_lower and brand not in t_lower:
-            return False
-
-    iphone_q = re.search(r'iphone\s*(\d+\s*(?:pro\s*max|pro|plus|max|mini|ultra|e|air)?)', q_lower)
-    iphone_t = re.search(r'iphone\s*(\d+\s*(?:pro\s*max|pro|plus|max|mini|ultra|e|air)?)', t_lower)
-    if iphone_q:
-        q_model = re.sub(r'\s+', '', iphone_q.group(1))
-        t_model = re.sub(r'\s+', '', iphone_t.group(1)) if iphone_t else ''
-        if q_model != t_model:
-            return False
-
-    q_flat = re.sub(r'(\d+)\s*(gb|tb)', lambda m: m.group(1) + m.group(2), q_lower).replace(" ", "")
-    t_flat = re.sub(r'(\d+)\s*(gb|tb)', lambda m: m.group(1) + m.group(2), t_lower).replace(" ", "")
-    storages = ['64gb', '128gb', '256gb', '512gb', '1tb', '2tb']
-    query_has_storage = any(s in q_flat for s in storages)
-    for storage in storages:
-        if storage in q_flat and storage not in t_flat:
-            return False
-        if storage in t_flat and storage not in q_flat and query_has_storage:
-            return False
-
-    return True
-
-
 def _cffi_get(url, timeout=14, extra_headers=None):
-    from curl_cffi import requests as cffi_requests
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Language": "en-IN,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": random.choice(USER_AGENTS),
         **(extra_headers or {}),
     }
     for browser in [random.choice(["chrome124", "chrome123", "chrome120"]), "chrome116"]:
@@ -86,9 +157,8 @@ def _cffi_get(url, timeout=14, extra_headers=None):
             print(f"    [{browser}] {e}")
     return None
 
-
 # ─────────────────────────────────────────────
-# AMAZON
+# SCRAPERS (all six stores)
 # ─────────────────────────────────────────────
 
 def scrape_amazon(query):
@@ -110,11 +180,7 @@ def scrape_amazon(query):
         print(f"  [Amazon] Cards found: {len(cards)}")
 
         def is_sponsored(card):
-            if card.get('data-component-type') == 'sp-sponsored-result':
-                return True
-            if card.find('span', string=re.compile(r'^Sponsored$', re.I)):
-                return True
-            return False
+            return card.get('data-component-type') == 'sp-sponsored-result' or card.find('span', string=re.compile(r'^Sponsored$', re.I))
 
         def parse_card(card):
             title_elem = card.select_one('h2 span')
@@ -173,11 +239,6 @@ def scrape_amazon(query):
     except Exception as e:
         print(f"  [Amazon] Error: {e}")
     return None
-
-
-# ─────────────────────────────────────────────
-# FLIPKART
-# ─────────────────────────────────────────────
 
 def scrape_flipkart(query):
     safe_q = urllib.parse.quote(query)
@@ -238,11 +299,6 @@ def scrape_flipkart(query):
         print(f"  [Flipkart] Error: {e}")
     return None
 
-
-# ─────────────────────────────────────────────
-# RELIANCE DIGITAL
-# ─────────────────────────────────────────────
-
 def scrape_reliance(query):
     safe_q = urllib.parse.quote(query)
     url = f"https://www.reliancedigital.in/ext/raven-api/catalog/v1.0/products?q={safe_q}&page_no=1&page_size=24"
@@ -258,13 +314,15 @@ def scrape_reliance(query):
         print(f"  [Reliance] API status: {r.status_code}")
         if r.status_code != 200:
             return None
-        items = r.json().get('items', [])
+        data = r.json()
+        items = data.get('items', []) if isinstance(data, dict) else []
         print(f"  [Reliance] {len(items)} items returned")
 
         for item in items:
-            name  = item.get('name', '')
-            slug  = item.get('slug', '')
-            price = item.get('price', {}).get('effective', {}).get('min', 0)
+            name = item.get('name', '')
+            slug = item.get('slug', '')
+            price_data = item.get('price', {})
+            price = price_data.get('effective', {}).get('min', 0) if isinstance(price_data, dict) else 0
             if not name or not price or price <= 0:
                 continue
             print(f"  [Reliance] Candidate: ₹{price:,} | {name}")
@@ -274,143 +332,34 @@ def scrape_reliance(query):
             rd_img = ''
             medias = item.get('medias', [])
             if medias and isinstance(medias, list):
-                first = medias[0]
-                rd_img = first.get('url') or first.get('image') or ''
-                if rd_img and not rd_img.startswith('http'):
-                    rd_img = 'https://www.reliancedigital.in' + rd_img
+                first = medias[0] if medias else None
+                if first and isinstance(first, dict):
+                    rd_img = first.get('url') or first.get('image') or ''
+                    if rd_img and not rd_img.startswith('http'):
+                        rd_img = 'https://www.reliancedigital.in' + rd_img
 
             print(f"  [Reliance] ✅ {name[:50]} @ ₹{price:,}")
             return {"price": float(price), "display_price": f"₹{price:,}",
                     "rating": "N/A",
-                    "link": f"https://www.reliancedigital.in/product/{slug}",
+                    "link": f"https://www.reliancedigital.in/product/{slug}" if slug else f"https://www.reliancedigital.in/search?q={safe_q}",
                     "title": name[:70], "image": rd_img}
 
     except Exception as e:
         print(f"  [Reliance] Error: {e}")
     return None
 
-
-# ─────────────────────────────────────────────
-# TATA CLIQ
-# Site is a pure CSR React shell (13KB, no product data in HTML).
-
-# ─────────────────────────────────────────────
-# CROMA
-# Uses Croma's public Algolia-backed JSON API
-# ─────────────────────────────────────────────
-
-def scrape_croma(query):
-    safe_q = urllib.parse.quote_plus(query)
-    api_url = (
-        f"https://api.croma.com/searchservices/v1/category/search"
-        f"?q={safe_q}&currentPage=0&pageSize=10&sortBy=relevance"
-    )
-    headers = {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept": "application/json",
-        "Referer": "https://www.croma.com/",
-        "Origin": "https://www.croma.com",
-    }
-    try:
-        # Try JSON API first (fast, no browser needed)
-        r = requests.get(api_url, headers=headers, timeout=10)
-        print(f"  [Croma] API status: {r.status_code}")
-        if r.status_code == 200:
-            data = r.json()
-            items = (data.get("searchresult", {}).get("products") or
-                     data.get("products") or data.get("results") or [])
-            print(f"  [Croma] {len(items)} items from API")
-            for item in items:
-                name = (item.get("name") or item.get("productName") or
-                        item.get("title") or "")
-                if not name or len(name) < 5:
-                    continue
-                price = clean_price(
-                    item.get("prices", {}).get("sellingPrice") or
-                    item.get("price", {}).get("value") or
-                    item.get("offerPrice") or item.get("sellingPrice") or
-                    item.get("mrp")
-                )
-                if price == float("inf"):
-                    continue
-                print(f"  [Croma] Candidate: ₹{price:,.0f} | {name[:60]}")
-                if not is_correct_product(query, name):
-                    continue
-                slug = item.get("url") or item.get("slug") or ""
-                link = (f"https://www.croma.com{slug}" if slug.startswith("/")
-                        else f"https://www.croma.com/searchB?q={safe_q}")
-                rating = str(item.get("rating") or item.get("averageRating") or "N/A")
-                images = item.get("images") or []
-                img = ""
-                if images and isinstance(images, list):
-                    first = images[0]
-                    img = (first.get("url") or first.get("imageURL") or
-                           (first if isinstance(first, str) else ""))
-                if not img:
-                    img = item.get("thumbnail") or item.get("image") or ""
-                print(f"  [Croma] ✅ {name[:50]} @ ₹{price:,.0f} ⭐{rating}")
-                return {"price": price, "display_price": f"₹{price:,.0f}",
-                        "rating": rating, "link": link, "title": name[:70], "image": img}
-
-        # Fallback: HTML scrape with curl_cffi
-        print("  [Croma] API failed, trying HTML...")
-        from curl_cffi import requests as cffi_requests
-        page_url = f"https://www.croma.com/searchB?q={safe_q}%3Arelevance&text={safe_q}"
-        r2 = cffi_requests.get(page_url, impersonate="chrome124", timeout=12)
-        print(f"  [Croma] HTML status: {r2.status_code}")
-        if r2.status_code == 200:
-            soup = BeautifulSoup(r2.text, "lxml")
-            for sel in ["li.product-item", "div[class*='product-item']",
-                        "div[class*='ProductCard']", "div[class*='plp-grid']"]:
-                items_html = [c for c in soup.select(sel)
-                              if re.search(r"₹\s*\d", c.get_text())]
-                if not items_html:
-                    continue
-                print(f"  [Croma] HTML selector '{sel}': {len(items_html)} items")
-                for item in items_html:
-                    name = ""
-                    for t_sel in ["h3", "h4", "h2", "[class*='title']", "[class*='name']"]:
-                        el = item.select_one(t_sel)
-                        if el and len(el.get_text(strip=True)) > 5:
-                            name = el.get_text(strip=True)
-                            break
-                    price_m = re.search(r"₹\s*([\d,]+)", item.get_text())
-                    price = clean_price(price_m.group(1)) if price_m else float("inf")
-                    if not name or price == float("inf"):
-                        continue
-                    print(f"  [Croma] HTML Candidate: ₹{price:,.0f} | {name[:60]}")
-                    if not is_correct_product(query, name):
-                        continue
-                    a = item.select_one("a[href]")
-                    link = urljoin("https://www.croma.com", a["href"]) if a else page_url
-                    img_el = item.select_one("img")
-                    img = (img_el.get("src") or img_el.get("data-src", "")) if img_el else ""
-                    print(f"  [Croma] ✅ {name[:50]} @ ₹{price:,.0f}")
-                    return {"price": price, "display_price": f"₹{price:,.0f}",
-                            "rating": "N/A", "link": link, "title": name[:70], "image": img}
-                break
-        print("  [Croma] No products found")
-    except Exception as e:
-        print(f"  [Croma] Error: {e}")
-    return None
-
-
 def scrape_vijaysales(query):
     safe_q = urllib.parse.quote(query)
     search_url = f"https://www.vijaysales.com/search?q={safe_q}"
-
     try:
         resp = _cffi_get(search_url, extra_headers={"Referer": "https://www.vijaysales.com/"})
         if not resp:
             return None
         print(f"  [VijayS] Status: {resp.status_code}, len={len(resp.text)}")
-
         soup = BeautifulSoup(resp.text, 'lxml')
         cards = soup.select('a.productcollection__item')
         print(f"  [VijayS] Cards found: {len(cards)}")
-
         for card in cards:
-            # ── Price ──────────────────────────────────────────────────────
             price_el = card.select_one('div.price span')
             if not price_el:
                 price_el = card.find('span', string=re.compile(r'₹'))
@@ -419,10 +368,7 @@ def scrape_vijaysales(query):
             price = clean_price(price_el.get_text(strip=True))
             if price == float('inf'):
                 continue
-
-            # ── Title ──────────────────────────────────────────────────────
             title = ""
-            # Try named divs/paragraphs first
             for sel in ['div.name', 'p.name', 'div.product-name', 'p.product-name',
                         'div.title', 'p.title', 'h2', 'h3']:
                 el = card.select_one(sel)
@@ -431,14 +377,10 @@ def scrape_vijaysales(query):
                     if len(t) > 5 and '₹' not in t:
                         title = t
                         break
-
-            # Fall back to img alt text
             if not title:
                 img_el = card.select_one('img')
                 if img_el:
                     title = img_el.get('alt', '').strip()
-
-            # Last resort: first non-price text block among direct children
             if not title:
                 for child in card.children:
                     if hasattr(child, 'get_text'):
@@ -446,89 +388,143 @@ def scrape_vijaysales(query):
                         if len(t) > 5 and '₹' not in t:
                             title = t
                             break
-
             if not title or len(title) < 5:
-                # Show card HTML once to diagnose further if needed
-                print(f"  [VijayS] No title found for card @ ₹{price:,.0f} — HTML: {str(card)[:250]}")
+                print(f"  [VijayS] No title for card @ ₹{price:,.0f}")
                 continue
-
             print(f"  [VijayS] Candidate: ₹{price:,.0f} | {title[:60]}")
             if not is_correct_product(query, title):
                 continue
-
-            # ── Link ───────────────────────────────────────────────────────
             href = card.get('href', '')
             link = urljoin("https://www.vijaysales.com", href) if href else search_url
-
-            # ── Image ──────────────────────────────────────────────────────
             img = ""
             img_el = card.select_one('img')
             if img_el:
                 img = (img_el.get('data-original') or img_el.get('data-src') or
                        img_el.get('src') or '')
-
             print(f"  [VijayS] ✅ {title[:50]} @ ₹{price:,.0f}")
             return {"price": price, "display_price": f"₹{price:,.0f}",
                     "rating": "N/A", "link": link, "title": title[:70], "image": img}
-
         if not cards:
-            print("  [VijayS] Selector a.productcollection__item found nothing")
-            print(f"  [VijayS] Page head: {resp.text[:400]}")
-
+            print("  [VijayS] No cards found")
     except Exception as e:
         print(f"  [VijayS] Error: {e}")
     return None
 
+def scrape_snapdeal(query):
+    safe_q = urllib.parse.quote(query)
+    url = f"https://www.snapdeal.com/search?keyword={safe_q}"
+    try:
+        resp = _cffi_get(url)
+        if not resp:
+            return None
+        soup = BeautifulSoup(resp.text, "lxml")
+        cards = soup.select("div.product-tuple-listing")
+        for card in cards:
+            title = card.select_one("p.product-title")
+            price = card.select_one("span.product-price")
+            if not title or not price:
+                continue
+            title_text = title.get_text(strip=True)
+            price_val = clean_price(price.get_text())
+            if not title_text or price_val == float('inf'):
+                continue
+            print(f"  [Snapdeal] Candidate: ₹{price_val:,.0f} | {title_text[:60]}")
+            if not is_correct_product(query, title_text):
+                continue
+            link = card.select_one("a.dp-widget-link")
+            img = card.select_one("img.product-image")
+            return {"price": price_val, "display_price": f"₹{price_val:,.0f}",
+                    "rating": "N/A", "link": link["href"] if link else url,
+                    "title": title_text[:70], "image": img.get("src", "") if img else ""}
+    except Exception as e:
+        print(f"  [Snapdeal] Error: {e}")
+    return None
+
+def scrape_shopclues(query):
+    safe_q = urllib.parse.quote(query)
+    url = f"https://www.shopclues.com/search?q={safe_q}"
+    try:
+        resp = _cffi_get(url)
+        if not resp:
+            return None
+        soup = BeautifulSoup(resp.text, "lxml")
+        cards = soup.select("div.column, div.search_blocks")
+        for card in cards:
+            title = card.select_one("h2")
+            price = card.select_one(".p_price")
+            if not title or not price:
+                continue
+            title_text = title.get_text(strip=True)
+            price_val = clean_price(price.get_text())
+            if not title_text or price_val == float('inf'):
+                continue
+            print(f"  [ShopClues] Candidate: ₹{price_val:,.0f} | {title_text[:60]}")
+            if not is_correct_product(query, title_text):
+                continue
+            link = card.select_one("a")
+            img = card.select_one("img")
+            return {"price": price_val, "display_price": f"₹{price_val:,.0f}",
+                    "rating": "N/A", "link": link["href"] if link else url,
+                    "title": title_text[:70], "image": img.get("src", "") if img else ""}
+    except Exception as e:
+        print(f"  [ShopClues] Error: {e}")
+    return None
 
 # ─────────────────────────────────────────────
-# ORCHESTRATOR
+# ORCHESTRATOR – all stores, best price only from Amazon, Flipkart, Reliance
 # ─────────────────────────────────────────────
 
 def get_product_data(query):
     import time
     t0 = time.time()
     safe_q = urllib.parse.quote(query)
-    results = {
-        "Amazon":           {"price": float('inf'), "display_price": "Not Found", "rating": "N/A",
-                             "link": f"https://www.amazon.in/s?k={safe_q}",
-                             "title": "No exact match found", "image": ""},
-        "Flipkart":         {"price": float('inf'), "display_price": "Not Found", "rating": "N/A",
-                             "link": f"https://www.flipkart.com/search?q={safe_q}",
-                             "title": "No exact match found", "image": ""},
-        "Reliance Digital": {"price": float('inf'), "display_price": "Not Found", "rating": "N/A",
-                             "link": f"https://www.reliancedigital.in/search?q={safe_q}",
-                             "title": "No exact match found", "image": ""},
-        "Croma":            {"price": float('inf'), "display_price": "Not Found", "rating": "N/A",
-                             "link": f"https://www.croma.com/searchB?q={safe_q}%3Arelevance",
-                             "title": "No exact match found", "image": ""},
 
+    stores_to_scrape = {
+        "Amazon": scrape_amazon,
+        "Flipkart": scrape_flipkart,
+        "Reliance Digital": scrape_reliance,
+        "Vijay Sales": scrape_vijaysales,
+        "Snapdeal": scrape_snapdeal,
+        "ShopClues": scrape_shopclues,
     }
+
+    results = {}
+    for store in stores_to_scrape.keys():
+        results[store] = {
+            "price": float('inf'),
+            "display_price": "Not Found",
+            "rating": "N/A",
+            "link": f"https://www.{store.lower().replace(' ', '')}.com/search?q={safe_q}",
+            "title": "No match",
+            "image": ""
+        }
 
     print(f"\n[Searching] {query}")
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = {
-            executor.submit(scrape_amazon, query):     "Amazon",
-            executor.submit(scrape_flipkart, query):   "Flipkart",
-            executor.submit(scrape_reliance, query):   "Reliance Digital",
-            executor.submit(scrape_croma, query):      "Croma",
-        }
+    with ThreadPoolExecutor(max_workers=len(stores_to_scrape)) as executor:
+        futures = {executor.submit(scraper, query): store for store, scraper in stores_to_scrape.items()}
         for future in as_completed(futures):
             store = futures[future]
             try:
-                result = future.result()
+                result = future.result(timeout=30)
+                if result and isinstance(result, dict) and result.get('price', 0) > 0:
+                    results[store] = result
+                else:
+                    results[store]['price'] = float('inf')
             except Exception as e:
-                print(f"  [{store}] Unhandled exception: {e}")
-                result = None
-            if result:
-                results[store] = result
+                print(f"  [{store}] Error: {e}")
+                results[store]['price'] = float('inf')
             print(f"  [{store}] done in {time.time()-t0:.1f}s")
 
+    # Best price only from Amazon, Flipkart, Reliance Digital
+    best_stores_set = {"Amazon", "Flipkart", "Reliance Digital"}
     best_store, lowest_price = None, float('inf')
-    for store, data in results.items():
-        if data['price'] < lowest_price:
-            lowest_price = data['price']
-            best_store = store
+    for store in best_stores_set:
+        if store in results:
+            price = results[store].get('price', float('inf'))
+            if price < lowest_price:
+                lowest_price = price
+                best_store = store
 
     best_data = None
     if best_store and lowest_price != float('inf'):
@@ -536,3 +532,7 @@ def get_product_data(query):
 
     print(f"  [Total] {time.time()-t0:.1f}s")
     return {"stores": results, "best": best_data}
+
+if __name__ == "__main__":
+    result = get_product_data("iphone 13")
+    print(json.dumps(result, indent=2))

@@ -167,12 +167,9 @@ def results():
         if cleaned and cleaned != query and len(cleaned) < len(query):
             return redirect(url_for('results', query=cleaned, c='1'))
 
-    # ✅ Run AI display-name cleaning and scraping IN PARALLEL
-    # AI cleans the query for display while scrapers are already running
     from concurrent.futures import ThreadPoolExecutor as TPE
     with TPE(max_workers=2) as ex:
-        scrape_future = ex.submit(get_product_data, query)
-        # Clean for display only — scraper already uses the clean query
+        scrape_future = ex.submit(get_product_data, query)   # ← API key removed
         data = scrape_future.result()
 
     return render_template('index.html', query=query, results=data, float=float)
@@ -185,6 +182,7 @@ def magic_link_handler(full_url):
     full_url_with_scheme = full_url if '://' in full_url else 'https://' + full_url
     query = get_clean_query(full_url_with_scheme)
     return redirect(url_for('results', query=query))
+    
 
 
 if __name__ == '__main__':

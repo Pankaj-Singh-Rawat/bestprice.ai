@@ -27,7 +27,9 @@
   --amazon:#ff9900;
   --flipkart:#2874f0;
   --reliance:#e91e1e;
-  --croma:#6ec72d;
+  --vijay:#f97316;
+  --snapdeal:#e40046;
+  --shopclues:#f7971e;
 }
 
 html{scroll-behavior:smooth}
@@ -62,7 +64,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .hero-title .t1{display:block;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero-title .t2{display:block;background:linear-gradient(135deg,var(--accent),var(--purple),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradshift 4s ease-in-out infinite;background-size:200% 200%}
 @keyframes gradshift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.hero-sub{font-size:1.05rem;color:var(--muted2);font-weight:300;max-width:520px;line-height:1.8;margin-bottom:52px;opacity:0;animation:revealUp .6s .35s ease forwards}
+.hero-sub{font-size:1.05rem;color:var(--muted2);font-weight:300;max-width:560px;line-height:1.8;margin-bottom:52px;opacity:0;animation:revealUp .6s .35s ease forwards}
 @keyframes revealUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 
 .search-wrap{width:100%;max-width:700px;opacity:0;animation:revealUp .6s .45s ease forwards}
@@ -90,7 +92,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 @keyframes fbadgefloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
 
 .results-section{position:relative;z-index:10;padding:0 24px 120px}
-.results-inner{max-width:1000px;margin:0 auto}
+.results-inner{max-width:1200px;margin:0 auto}
 .results-top{text-align:center;margin-bottom:60px}
 .results-eyebrow{font-size:0.7rem;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;opacity:0.8}
 .results-title{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(1.8rem,4vw,3rem);background:linear-gradient(135deg,#fff,rgba(255,255,255,0.6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -109,7 +111,16 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .best-cta{display:inline-flex;align-items:center;gap:10px;padding:16px 36px;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-family:'Orbitron',monospace;font-weight:700;font-size:0.8rem;letter-spacing:0.12em;text-decoration:none;border-radius:12px;transition:transform .2s,box-shadow .2s;box-shadow:0 0 30px rgba(0,245,255,0.2);white-space:nowrap}
 .best-cta:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(0,245,255,0.35)}
 
-.cards-grid{display:grid;gap:20px}
+/* Two‑column layout: found products (left) + missing sidebar (right) */
+.results-grid-wrapper{display:flex;gap:30px;align-items:flex-start}
+.cards-grid{flex:3;display:grid;gap:20px}
+.missing-stores-sidebar{flex:1;background:var(--glass);border-radius:20px;padding:20px;border:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:100px}
+.missing-stores-sidebar h3{font-family:'Orbitron',monospace;font-size:0.8rem;letter-spacing:0.1em;color:var(--muted2);margin-bottom:16px}
+.missing-stores-sidebar ul{list-style:none;padding:0;margin:0}
+.missing-stores-sidebar li{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:0.8rem}
+.missing-stores-sidebar li span:first-child{opacity:0.5}
+.missing-stores-sidebar li span:last-child{margin-left:auto;font-size:0.7rem;color:var(--muted)}
+.missing-stores-sidebar .sidebar-footer{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:0.7rem;color:var(--muted);text-align:center}
 
 .scard{position:relative;border-radius:24px;overflow:hidden;background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(16px);transition:transform .3s cubic-bezier(.34,1.56,.64,1),border-color .3s,box-shadow .3s;display:grid;grid-template-columns:220px 1fr auto;align-items:stretch;min-height:180px}
 .scard:hover{transform:translateY(-4px) scale(1.005);border-color:var(--border2);box-shadow:0 20px 60px rgba(0,0,0,0.4)}
@@ -126,12 +137,9 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .scard-amazon .scard-img{background:linear-gradient(135deg,#0a0f1e,#160f00)}
 .scard-flipkart .scard-img{background:linear-gradient(135deg,#0a0f1e,#00080f)}
 .scard-reliance .scard-img{background:linear-gradient(135deg,#0a0f1e,#160000)}
-.scard-croma .scard-img{background:linear-gradient(135deg,#0a0f1e,#001a00)}
-
-.scard-amazon.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,153,0,0.08),transparent 70%);pointer-events:none}
-.scard-flipkart.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(40,116,240,0.08),transparent 70%);pointer-events:none}
-.scard-reliance.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(233,30,30,0.08),transparent 70%);pointer-events:none}
-.scard-croma.winner .scard-img::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(110,199,45,0.08),transparent 70%);pointer-events:none}
+.scard-vijay .scard-img{background:linear-gradient(135deg,#0a0f1e,#160800)}
+.scard-snapdeal .scard-img{background:linear-gradient(135deg,#0a0f1e,#160003)}
+.scard-shopclues .scard-img{background:linear-gradient(135deg,#0a0f1e,#160a00)}
 
 .scard-info{padding:28px 32px;display:flex;flex-direction:column;justify-content:center;gap:14px}
 .scard-store-row{display:flex;align-items:center;gap:10px}
@@ -139,7 +147,6 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .scard-store-name{font-size:0.72rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted2)}
 .winner-badge{font-size:0.58rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:linear-gradient(135deg,var(--accent),var(--green));color:#000;padding:3px 10px;border-radius:100px}
 .scard-title{font-size:0.95rem;font-weight:500;color:var(--text);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.scard-title.not-found{color:var(--muted);font-style:italic;font-weight:300}
 .scard-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .scard-rating{display:flex;align-items:center;gap:5px;font-size:0.78rem;font-weight:600;color:var(--accent3)}
 .scard-rating.na{color:var(--muted)}
@@ -147,7 +154,6 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:70px;display:flex;
 .scard-price-col{padding:28px 32px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:14px;border-left:1px solid var(--border);min-width:180px}
 .scard-price{font-family:'Orbitron',monospace;font-weight:900;font-size:1.8rem;line-height:1;color:var(--text);white-space:nowrap}
 .scard-price.winner-p{background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.scard-price.nf{font-family:'Space Grotesk',sans-serif;font-size:0.85rem;font-weight:300;font-style:italic;color:var(--muted)}
 .scard-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:8px;border:1px solid var(--border2);color:var(--muted2);font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;background:var(--glass);backdrop-filter:blur(8px);transition:all .2s;white-space:nowrap}
 .scard-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,245,255,0.06);box-shadow:0 0 20px rgba(0,245,255,0.1)}
 
@@ -166,18 +172,21 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
 .loading-inner-dot::after{content:'';width:16px;height:16px;background:var(--accent);border-radius:50%;box-shadow:0 0 20px var(--accent);animation:dotpulse 1s ease-in-out infinite}
 @keyframes dotpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.5);opacity:0.5}}
 .loading-title{font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;letter-spacing:0.15em;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.loading-stores-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:400px}
+.loading-stores-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:560px}
 .lstore{display:flex;align-items:center;gap:7px;font-size:0.68rem;font-weight:500;color:var(--muted2);letter-spacing:0.08em}
 .lstore-dot{width:7px;height:7px;border-radius:50%;animation:storewave 1.5s ease-in-out infinite}
 .lstore:nth-child(1) .lstore-dot{animation-delay:0s}
 .lstore:nth-child(2) .lstore-dot{animation-delay:.2s}
 .lstore:nth-child(3) .lstore-dot{animation-delay:.4s}
 .lstore:nth-child(4) .lstore-dot{animation-delay:.6s}
-
+.lstore:nth-child(5) .lstore-dot{animation-delay:.8s}
+.lstore:nth-child(6) .lstore-dot{animation-delay:1s}
 @keyframes storewave{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(1.6);opacity:1}}
 
 @media(max-width:768px){
   header{padding:0 20px}
+  .results-grid-wrapper{flex-direction:column}
+  .missing-stores-sidebar{position:static;width:100%}
   .scard{grid-template-columns:1fr;min-height:auto}
   .scard-img{height:220px;border-right:none;border-bottom:1px solid var(--border)}
   .scard-price-col{border-left:none;border-top:1px solid var(--border);flex-direction:row;justify-content:space-between;align-items:center;padding:20px 24px}
@@ -206,7 +215,9 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
     <div class="lstore"><span class="lstore-dot" style="background:var(--amazon)"></span>Amazon</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--flipkart)"></span>Flipkart</div>
     <div class="lstore"><span class="lstore-dot" style="background:var(--reliance)"></span>Reliance</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--croma)"></span>Croma</div>
+    <div class="lstore"><span class="lstore-dot" style="background:var(--vijay)"></span>Vijay Sales</div>
+    <div class="lstore"><span class="lstore-dot" style="background:var(--snapdeal)"></span>Snapdeal</div>
+    <div class="lstore"><span class="lstore-dot" style="background:var(--shopclues)"></span>ShopClues</div>
   </div>
 </div>
 
@@ -214,7 +225,7 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
   <div class="logo">BEST<span style="opacity:1">PRICE</span>.AI</div>
   <div class="header-badges">
     <div class="hbadge hbadge-live">LIVE PRICES</div>
-    <div class="hbadge hbadge-stores">4 STORES</div>
+    <div class="hbadge hbadge-stores">6 STORES</div>
   </div>
 </header>
 
@@ -238,7 +249,8 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
 
   <p class="hero-sub">
     Drop a product name or paste any store link.<br>
-    We hunt across Amazon, Flipkart, Reliance Digital<br>&amp; Croma — and surface the best deal in seconds.
+    We hunt across Amazon, Flipkart, Reliance Digital,<br>
+    Vijay Sales, Snapdeal &amp; ShopClues — in seconds.
   </p>
 
   <div class="search-wrap">
@@ -256,7 +268,9 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
       <div class="chip"><span class="chipdot" style="background:var(--amazon)"></span>Amazon.in</div>
       <div class="chip"><span class="chipdot" style="background:var(--flipkart)"></span>Flipkart</div>
       <div class="chip"><span class="chipdot" style="background:var(--reliance)"></span>Reliance Digital</div>
-      <div class="chip"><span class="chipdot" style="background:var(--croma)"></span>Croma</div>
+      <div class="chip"><span class="chipdot" style="background:var(--vijay)"></span>Vijay Sales</div>
+      <div class="chip"><span class="chipdot" style="background:var(--snapdeal)"></span>Snapdeal</div>
+      <div class="chip"><span class="chipdot" style="background:var(--shopclues)"></span>ShopClues</div>
     </div>
   </div>
 </section>
@@ -283,98 +297,69 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);padding:2
     </div>
     {% endif %}
 
-    <div class="cards-grid">
-
-      {# ── AMAZON ── #}
-      {% set az = results.stores['Amazon'] %}
-      <div class="scard scard-amazon {% if results.best and results.best.store == 'Amazon' %}winner{% endif %}">
-        <div class="scard-img">
-          {% if az.image %}<img src="{{ az.image }}" alt="{{ az.title }}" loading="lazy">
-          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--amazon)">A</div></div>{% endif %}
-        </div>
-        <div class="scard-info">
-          <div class="scard-store-row">
-            <span class="store-dot" style="background:var(--amazon)"></span>
-            <span class="scard-store-name">Amazon.in</span>
-            {% if results.best and results.best.store == 'Amazon' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
-          </div>
-          <div class="scard-title {% if az.price == float('inf') %}not-found{% endif %}">{{ az.title }}</div>
-          <div class="scard-meta"><div class="scard-rating {% if az.rating == 'N/A' %}na{% endif %}">{% if az.rating != 'N/A' %}★ {{ az.rating }}{% else %}No rating{% endif %}</div></div>
-        </div>
-        <div class="scard-price-col">
-          <div class="scard-price {% if az.price == float('inf') %}nf{% elif results.best and results.best.store == 'Amazon' %}winner-p{% endif %}">{{ az.display_price }}</div>
-          <a href="{{ az.link }}" target="_blank" class="scard-btn">View ↗</a>
-        </div>
+    <div class="results-grid-wrapper">
+      <!-- Main column: only stores that found a product -->
+      <div class="cards-grid">
+        {% for store, data in results.stores.items() %}
+          {% if data.price != float('inf') %}
+            <div class="scard scard-{{ store|lower|replace(' ', '') }} 
+              {% if results.best and results.best.store == store %}winner{% endif %}">
+              <div class="scard-img">
+                {% if data.image %}
+                  <img src="{{ data.image }}" alt="{{ data.title }}" loading="lazy">
+                {% else %}
+                  <div class="img-placeholder">
+                    <div class="img-placeholder-letter" style="color: var(--{{ store|lower|replace(' ', '') }})">
+                      {{ store[0] }}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="scard-info">
+                <div class="scard-store-row">
+                  <span class="store-dot" style="background: var(--{{ store|lower|replace(' ', '') }})"></span>
+                  <span class="scard-store-name">{{ store }}</span>
+                  {% if results.best and results.best.store == store %}
+                    <span class="winner-badge">BEST DEAL</span>
+                  {% endif %}
+                </div>
+                <div class="scard-title">{{ data.title }}</div>
+                <div class="scard-meta">
+                  <div class="scard-rating {% if data.rating == 'N/A' %}na{% endif %}">
+                    {% if data.rating != 'N/A' %}★ {{ data.rating }}{% else %}No rating{% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="scard-price-col">
+                <div class="scard-price {% if results.best and results.best.store == store %}winner-p{% endif %}">
+                  {{ data.display_price }}
+                </div>
+                <a href="{{ data.link }}" target="_blank" class="scard-btn">View ↗</a>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
       </div>
 
-      {# ── FLIPKART ── #}
-      {% set fk = results.stores['Flipkart'] %}
-      <div class="scard scard-flipkart {% if results.best and results.best.store == 'Flipkart' %}winner{% endif %}">
-        <div class="scard-img">
-          {% if fk.image %}<img src="{{ fk.image }}" alt="{{ fk.title }}" loading="lazy">
-          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--flipkart)">F</div></div>{% endif %}
-        </div>
-        <div class="scard-info">
-          <div class="scard-store-row">
-            <span class="store-dot" style="background:var(--flipkart)"></span>
-            <span class="scard-store-name">Flipkart</span>
-            {% if results.best and results.best.store == 'Flipkart' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
-          </div>
-          <div class="scard-title {% if fk.price == float('inf') %}not-found{% endif %}">{{ fk.title }}</div>
-          <div class="scard-meta"><div class="scard-rating {% if fk.rating == 'N/A' %}na{% endif %}">{% if fk.rating != 'N/A' %}★ {{ fk.rating }}{% else %}No rating{% endif %}</div></div>
-        </div>
-        <div class="scard-price-col">
-          <div class="scard-price {% if fk.price == float('inf') %}nf{% elif results.best and results.best.store == 'Flipkart' %}winner-p{% endif %}">{{ fk.display_price }}</div>
-          <a href="{{ fk.link }}" target="_blank" class="scard-btn">View ↗</a>
+      <!-- Sidebar: stores that did NOT find the product -->
+      <div class="missing-stores-sidebar">
+        <h3>⚡ NOT FOUND</h3>
+        <ul>
+          {% for store, data in results.stores.items() %}
+            {% if data.price == float('inf') %}
+              <li>
+                <span class="store-dot" style="background: var(--{{ store|lower|replace(' ', '') }}); opacity: 0.5;"></span>
+                <span>{{ store }}</span>
+                <span>unavailable</span>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <div class="sidebar-footer">
+          These stores don't have this product.
         </div>
       </div>
-
-      {# ── RELIANCE ── #}
-      {% set rd = results.stores['Reliance Digital'] %}
-      <div class="scard scard-reliance {% if results.best and results.best.store == 'Reliance Digital' %}winner{% endif %}">
-        <div class="scard-img">
-          {% if rd.image %}<img src="{{ rd.image }}" alt="{{ rd.title }}" loading="lazy">
-          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--reliance)">R</div></div>{% endif %}
-        </div>
-        <div class="scard-info">
-          <div class="scard-store-row">
-            <span class="store-dot" style="background:var(--reliance)"></span>
-            <span class="scard-store-name">Reliance Digital</span>
-            {% if results.best and results.best.store == 'Reliance Digital' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
-          </div>
-          <div class="scard-title {% if rd.price == float('inf') %}not-found{% endif %}">{{ rd.title }}</div>
-          <div class="scard-meta"><div class="scard-rating {% if rd.rating == 'N/A' %}na{% endif %}">{% if rd.rating != 'N/A' %}★ {{ rd.rating }}{% else %}No rating{% endif %}</div></div>
-        </div>
-        <div class="scard-price-col">
-          <div class="scard-price {% if rd.price == float('inf') %}nf{% elif results.best and results.best.store == 'Reliance Digital' %}winner-p{% endif %}">{{ rd.display_price }}</div>
-          <a href="{{ rd.link }}" target="_blank" class="scard-btn">View ↗</a>
-        </div>
-      </div>
-
-      {# ── CROMA ── #}
-      {% set cr = results.stores['Croma'] %}
-      <div class="scard scard-croma {% if results.best and results.best.store == 'Croma' %}winner{% endif %}">
-        <div class="scard-img">
-          {% if cr.image %}<img src="{{ cr.image }}" alt="{{ cr.title }}" loading="lazy">
-          {% else %}<div class="img-placeholder"><div class="img-placeholder-letter" style="color:var(--croma)">C</div></div>{% endif %}
-        </div>
-        <div class="scard-info">
-          <div class="scard-store-row">
-            <span class="store-dot" style="background:var(--croma)"></span>
-            <span class="scard-store-name">Croma</span>
-            {% if results.best and results.best.store == 'Croma' %}<span class="winner-badge">BEST DEAL</span>{% endif %}
-          </div>
-          <div class="scard-title {% if cr.price == float('inf') %}not-found{% endif %}">{{ cr.title }}</div>
-          <div class="scard-meta"><div class="scard-rating {% if cr.rating == 'N/A' %}na{% endif %}">{% if cr.rating != 'N/A' %}★ {{ cr.rating }}{% else %}No rating{% endif %}</div></div>
-        </div>
-        <div class="scard-price-col">
-          <div class="scard-price {% if cr.price == float('inf') %}nf{% elif results.best and results.best.store == 'Croma' %}winner-p{% endif %}">{{ cr.display_price }}</div>
-          <a href="{{ cr.link }}" target="_blank" class="scard-btn">View ↗</a>
-        </div>
-      </div>
-
     </div>
-  </div>
   </div>
 </section>
 {% endif %}
@@ -437,7 +422,7 @@ const obs=new IntersectionObserver(entries=>{
     }
   });
 },{threshold:.1});
-document.querySelectorAll('.scard,.best-banner').forEach(el=>{
+document.querySelectorAll('.scard,.best-banner,.missing-stores-sidebar').forEach(el=>{
   el.style.opacity='0';el.style.transform='translateY(40px)';
   el.style.transition='opacity .6s ease,transform .6s cubic-bezier(.34,1.56,.64,1)';
   obs.observe(el);
