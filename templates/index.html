@@ -4,298 +4,241 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% if query %}{{ query }} — BestPrice.ai{% else %}BestPrice.ai — Find the Lowest Price in India{% endif %}</title>
-<meta name="description" content="Compare prices across Amazon, Flipkart, Reliance Digital, Vijay Sales, Snapdeal & ShopClues instantly.">
+<meta name="description" content="Compare prices across Amazon, Flipkart, Reliance Digital, Vijay Sales & Meesho instantly.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:#07080d;
-  --surface:#0e1018;
-  --card:#12151f;
-  --card-hover:#161a26;
-  --border:rgba(255,255,255,0.07);
-  --border-hi:rgba(255,255,255,0.14);
+  --bg:#030407;
+  --surface:#0a0c12;
+  --card:rgba(18, 21, 31, 0.7);
+  --card-hover:rgba(26, 30, 45, 0.9);
+  --border:rgba(255,255,255,0.08);
+  --border-hi:rgba(91,141,239,0.4);
   --accent:#5b8def;
-  --accent-glow:rgba(91,141,239,0.18);
-  --green:#22c55e;
-  --green-glow:rgba(34,197,94,0.15);
-  --amber:#f59e0b;
-  --red:#ef4444;
-  --text:#e8eaf0;
-  --text-2:#9ba3b8;
-  --text-3:#525c78;
+  --accent-glow:rgba(91,141,239,0.3);
+  --green:#00ff95;
+  --green-glow:rgba(0, 255, 149, 0.2);
+  --amber:#ffaa00;
+  --red:#ff4d4d;
+  --text:#f0f2f5;
+  --text-2:#a0aec0;
+  --text-3:#636e81;
   --amazon:#ff9900;
   --flipkart:#2874f0;
-  --reliancedigital:#e91e1e;
+  --reliancedigital:#ff2424;
   --vijaysales:#f97316;
-  --snapdeal:#e40046;
-  --shopclues:#f7971e;
-  --r:16px;
-  --r-lg:22px;
+  --meesho:#ff00d4;
+  --r:20px;
+  --r-lg:30px;
 }
 
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-/* ── Background ── */
-.bg-gradient{position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(ellipse 70% 50% at 15% 0%,rgba(91,141,239,0.07) 0%,transparent 65%),
-    radial-gradient(ellipse 50% 40% at 85% 100%,rgba(34,197,94,0.05) 0%,transparent 60%)}
-.grid-pattern{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.025;
-  background-image:linear-gradient(var(--border-hi) 1px,transparent 1px),linear-gradient(90deg,var(--border-hi) 1px,transparent 1px);
-  background-size:48px 48px}
+/* ── Anime Background System ── */
+.anime-bg-container {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #0d1117 0%, #030407 100%);
+}
+
+.anime-character {
+    position: absolute; bottom: -50px; right: -100px;
+    width: 600px; height: 800px; opacity: 0.15;
+    background: url('https://www.transparentpng.com/download/anime-character/GvW8yS-anime-character-clipart-transparent.png') no-repeat center bottom;
+    background-size: contain; filter: grayscale(1) brightness(1.5);
+    pointer-events: none; animation: floatChar 10s ease-in-out infinite;
+}
+
+@keyframes floatChar {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(2deg); }
+}
+
+.floating-shapes span {
+    position: absolute; background: var(--accent); opacity: 0.1;
+    border-radius: 50%; filter: blur(40px); animation: moveShapes 20s linear infinite;
+}
+
+@keyframes moveShapes {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(100vw, 100vh); }
+}
 
 /* ── Header ── */
-header{position:sticky;top:0;z-index:200;height:62px;display:flex;align-items:center;
-  justify-content:space-between;padding:0 32px;
-  background:rgba(7,8,13,0.8);backdrop-filter:blur(20px) saturate(160%);
+header{position:sticky;top:0;z-index:200;height:72px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 40px;
+  background:rgba(3, 4, 7, 0.7);backdrop-filter:blur(15px);
   border-bottom:1px solid var(--border)}
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;
-  color:var(--text);display:flex;align-items:center;gap:8px;text-decoration:none}
-.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
-  box-shadow:0 0 10px var(--accent);animation:pulse 2.5s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
-.header-right{display:flex;align-items:center;gap:10px}
-.live-badge{display:flex;align-items:center;gap:6px;font-size:.68rem;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--green);
-  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
-  padding:5px 12px;border-radius:100px}
-.live-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);
-  animation:pulse 1.4s ease-in-out infinite}
-.stores-badge{font-size:.68rem;font-weight:500;color:var(--text-3);
-  background:rgba(255,255,255,.04);border:1px solid var(--border);
-  padding:5px 12px;border-radius:100px}
+
+.logo{font-family:'Syne', sans-serif; font-weight:800;font-size:1.4rem;
+  color:var(--text);display:flex;align-items:center;gap:10px;text-decoration:none}
+
+.logo-dot{width:12px;height:12px;border-radius:2px;background:var(--accent);
+  box-shadow:0 0 20px var(--accent);transform:rotate(45deg);animation:pulse 2s infinite}
 
 /* ── Hero ── */
-.hero{position:relative;z-index:10;padding:88px 24px 72px;text-align:center;
-  display:flex;flex-direction:column;align-items:center}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;
-  font-size:.72rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--accent);background:var(--accent-glow);border:1px solid rgba(91,141,239,.25);
-  padding:7px 18px;border-radius:100px;margin-bottom:32px;
-  animation:fadeUp .5s ease both}
+.hero{position:relative;z-index:10;padding:60px 24px 60px;text-align:center;}
+.hero-eyebrow{background:rgba(91,141,239,0.1); color:var(--accent); border:1px solid var(--accent-glow);
+  padding:8px 20px; border-radius:100px; font-size:0.75rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:2px; margin-bottom:25px; display:inline-block;}
+
 .hero-title{font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(2.6rem,7vw,5.5rem);line-height:1.05;letter-spacing:-.03em;
-  margin-bottom:18px;animation:fadeUp .5s .1s ease both}
-.hero-title span{color:var(--accent)}
-.hero-sub{font-size:1rem;font-weight:400;color:var(--text-2);max-width:520px;
-  line-height:1.75;margin-bottom:48px;animation:fadeUp .5s .2s ease both}
-@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+  font-size:clamp(3rem, 8vw, 5.5rem); line-height:1; letter-spacing:-0.04em;
+  margin-bottom:20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5);}
 
-/* ── Search ── */
-.search-wrap{width:100%;max-width:660px;animation:fadeUp .5s .3s ease both}
-.search-box{display:flex;align-items:center;background:var(--card);
-  border:1px solid var(--border-hi);border-radius:var(--r-lg);overflow:hidden;
-  height:60px;transition:border-color .2s,box-shadow .2s}
-.search-box:focus-within{border-color:var(--accent);
-  box-shadow:0 0 0 3px var(--accent-glow),0 8px 32px rgba(0,0,0,.3)}
-.search-icon{padding:0 18px;font-size:1.1rem;opacity:.4;flex-shrink:0}
+.hero-title span{background:linear-gradient(90deg, #5b8def, #00ff95); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
+
+/* ── Store Pills (clickable links) ── */
+.store-row{margin-bottom:25px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;}
+.store-pill{display:inline-block; background:rgba(255,255,255,0.05); border:1px solid var(--border);
+  padding:8px 18px; border-radius:100px; font-size:0.8rem; color:var(--text-2); 
+  text-decoration:none; transition:0.3s;}
+.store-pill:hover{background:var(--accent); color:white; transform:translateY(-3px);}
+
+/* ── Search Box ── */
+.search-wrap{width:100%;max-width:720px; margin: 0 auto;}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,0.03);
+  border:2px solid var(--border);border-radius:var(--r-lg);backdrop-filter:blur(10px);
+  height:70px;transition:0.3s cubic-bezier(0.4, 0, 0.2, 1)}
+
+.search-box:focus-within{border-color:var(--accent); background:rgba(255,255,255,0.06);
+  box-shadow:0 0 40px var(--accent-glow);}
+
 .search-box input{flex:1;background:transparent;border:none;outline:none;
-  color:var(--text);font-family:'DM Sans',sans-serif;font-size:.975rem;
-  font-weight:400;padding:0 8px;height:100%}
-.search-box input::placeholder{color:var(--text-3)}
-.search-btn{height:100%;padding:0 28px;background:var(--accent);border:none;
-  color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
-  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;flex-shrink:0;
-  transition:background .2s,transform .15s}
-.search-btn:hover{background:#4a7de0}
-.search-btn:active{transform:scaleX(.97)}
+  color:#fff; font-size:1.1rem; padding:0 25px;}
 
-.store-row{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
-.store-pill{display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:500;
-  color:var(--text-3);padding:5px 12px;border-radius:100px;
-  border:1px solid var(--border);background:rgba(255,255,255,.02);
-  cursor:pointer;transition:border-color .2s,color .2s}
-.store-pill:hover{border-color:var(--border-hi);color:var(--text-2)}
-.sdot{width:6px;height:6px;border-radius:50%}
+.search-btn{height:54px; margin-right:8px; padding:0 30px; background:var(--accent);
+  border:none; color:#fff; border-radius:var(--r-lg); font-weight:800; cursor:pointer;
+  transition:0.2s; box-shadow:0 5px 15px var(--accent-glow);}
 
-/* ── Loading ── */
-.loading{display:none;position:fixed;inset:0;z-index:500;
-  background:rgba(7,8,13,.92);backdrop-filter:blur(16px);
-  flex-direction:column;align-items:center;justify-content:center;gap:28px}
-.loading.on{display:flex}
-.spin{width:48px;height:48px;border:2px solid rgba(91,141,239,.2);
-  border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
-.loading-stores{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:420px}
-.lstore{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--text-3)}
-.lstore-dot{width:6px;height:6px;border-radius:50%;animation:storewave 1.5s ease-in-out infinite}
-.lstore:nth-child(1) .lstore-dot{animation-delay:0s}
-.lstore:nth-child(2) .lstore-dot{animation-delay:.18s}
-.lstore:nth-child(3) .lstore-dot{animation-delay:.36s}
-.lstore:nth-child(4) .lstore-dot{animation-delay:.54s}
-.lstore:nth-child(5) .lstore-dot{animation-delay:.72s}
-.lstore:nth-child(6) .lstore-dot{animation-delay:.9s}
-@keyframes storewave{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.6)}}
+.search-btn:hover{transform:scale(1.05); background:#70a1ff;}
 
-/* ── Results ── */
-.results{position:relative;z-index:10;padding:0 24px 100px;max-width:900px;margin:0 auto}
-.results-header{display:flex;align-items:flex-start;justify-content:space-between;
-  gap:16px;margin-bottom:28px;flex-wrap:wrap}
-.results-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;
-  color:var(--text-2)}
-.results-title strong{color:var(--text)}
-.results-meta{font-size:.78rem;color:var(--text-3);margin-top:4px}
-.sort-controls{display:flex;gap:6px}
-.sort-btn{font-size:.7rem;font-weight:600;padding:6px 14px;border-radius:8px;
-  border:1px solid var(--border);background:transparent;color:var(--text-3);
-  cursor:pointer;transition:all .15s;white-space:nowrap}
-.sort-btn:hover{border-color:var(--border-hi);color:var(--text)}
-.sort-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* ── Cards Logic ── */
+.results{padding:40px 20px; max-width:1000px; margin:0 auto; position:relative; z-index:10;}
 
-/* ── Winner banner ── */
-.winner-banner{position:relative;overflow:hidden;border-radius:var(--r-lg);
-  padding:28px 32px;margin-bottom:20px;
-  background:linear-gradient(135deg,rgba(34,197,94,.07) 0%,rgba(91,141,239,.05) 100%);
-  border:1px solid rgba(34,197,94,.2);display:flex;align-items:center;
-  justify-content:space-between;gap:20px;flex-wrap:wrap}
-.winner-banner::before{content:'';position:absolute;left:-60px;top:-60px;
-  width:200px;height:200px;border-radius:50%;
-  background:radial-gradient(circle,rgba(34,197,94,.1),transparent 70%);
-  pointer-events:none}
-.wb-left{display:flex;align-items:center;gap:20px}
-.wb-icon{font-size:2.2rem;line-height:1;flex-shrink:0}
-.wb-label{font-size:.66rem;font-weight:700;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--green);margin-bottom:5px}
-.wb-price{font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(2rem,5vw,3rem);line-height:1;color:var(--green);margin-bottom:5px}
-.wb-store{font-size:.85rem;color:var(--text-2)}
-.wb-store strong{color:var(--text)}
-.wb-savings{display:inline-flex;align-items:center;gap:6px;
-  font-size:.72rem;font-weight:600;color:var(--green);
-  background:var(--green-glow);border:1px solid rgba(34,197,94,.2);
-  padding:4px 12px;border-radius:100px;margin-top:8px}
-.wb-savings::before{content:'↓'}
-.wb-cta{display:inline-flex;align-items:center;gap:8px;
-  padding:14px 30px;background:var(--green);color:#0a1a0e;
-  font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
-  letter-spacing:.06em;text-transform:uppercase;text-decoration:none;
-  border-radius:12px;transition:background .2s,transform .2s,box-shadow .2s;
-  box-shadow:0 4px 20px rgba(34,197,94,.25);white-space:nowrap;flex-shrink:0}
-.wb-cta:hover{background:#16a34a;transform:translateY(-2px);
-  box-shadow:0 8px 32px rgba(34,197,94,.35)}
+.card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--r);
+    display:grid; grid-template-columns:180px 1fr 200px; overflow:hidden;
+    margin-bottom:16px; transition:0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter:blur(10px);
+}
 
-/* ── Store cards ── */
-.cards{display:grid;gap:12px}
+.card:hover{
+    transform:scale(1.02); border-color:var(--accent);
+    box-shadow:0 20px 40px rgba(0,0,0,0.4);
+}
 
-.card{position:relative;border-radius:var(--r);background:var(--card);
-  border:1px solid var(--border);overflow:hidden;
-  display:grid;grid-template-columns:150px 1fr auto;
-  min-height:140px;transition:border-color .2s,transform .25s,box-shadow .2s}
-.card:hover{border-color:var(--border-hi);transform:translateY(-2px);
-  box-shadow:0 12px 40px rgba(0,0,0,.35);background:var(--card-hover)}
-.card.is-best{border-color:rgba(34,197,94,.25);background:linear-gradient(135deg,rgba(34,197,94,.04),var(--card))}
-.card.is-best::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,var(--green),rgba(34,197,94,.3),var(--green));
-  background-size:200% 100%;animation:shimmer 2.5s linear infinite}
-.card.is-notfound{opacity:.45;pointer-events:none}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.card.is-best{border:2px solid var(--green); background:rgba(0, 255, 149, 0.05);}
+.card.is-notfound{opacity:0.6;}
 
-/* card image */
-.card-img{background:rgba(255,255,255,.03);display:flex;align-items:center;
-  justify-content:center;border-right:1px solid var(--border);overflow:hidden}
-.card-img img{width:100%;height:100%;object-fit:contain;padding:16px;
-  transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
-.card:hover .card-img img{transform:scale(1.07)}
-.card-img-placeholder{display:flex;align-items:center;justify-content:center;
-  width:100%;height:100%;font-family:'Syne',sans-serif;font-weight:800;
-  font-size:2.8rem;color:rgba(255,255,255,.06)}
+.card-img{background:rgba(255,255,255,0.02); display:flex; align-items:center; justify-content:center; padding:20px;}
+.card-img img{max-width:100%; max-height:100px; object-fit:contain; filter:drop-shadow(0 5px 15px rgba(0,0,0,0.3));}
 
-/* card body */
-.card-body{padding:20px 22px;display:flex;flex-direction:column;justify-content:center;gap:10px}
-.card-store-row{display:flex;align-items:center;gap:8px}
-.store-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.store-name{font-size:.7rem;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--text-3)}
-.best-tag{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  background:var(--green);color:#0a1a0e;padding:2px 9px;border-radius:100px}
-.card-title{font-size:.9rem;font-weight:400;color:var(--text-2);line-height:1.5;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card-rating{font-size:.75rem;font-weight:600;color:var(--amber);
-  display:flex;align-items:center;gap:4px}
-.card-rating.na{color:var(--text-3)}
+.card-body{padding:25px; display:flex; flex-direction:column; justify-content:center;}
+.store-badge-small{font-size:0.65rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; color:var(--accent);}
 
-/* card price col */
-.card-price-col{padding:20px 22px;border-left:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:flex-end;
-  justify-content:center;gap:12px;min-width:160px}
-.card-price{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;
-  line-height:1;white-space:nowrap;color:var(--text)}
-.card-price.best-price{color:var(--green)}
-.card-notfound-price{font-size:.82rem;color:var(--text-3);font-style:italic}
-.card-btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;
-  border-radius:8px;border:1px solid var(--border-hi);
-  color:var(--text-3);font-size:.7rem;font-weight:600;letter-spacing:.06em;
-  text-transform:uppercase;text-decoration:none;background:rgba(255,255,255,.03);
-  transition:all .2s;white-space:nowrap}
-.card-btn:hover{border-color:var(--accent);color:var(--accent);
-  background:var(--accent-glow)}
-.card-diff{font-size:.7rem;color:var(--red);font-weight:600;white-space:nowrap}
-.card-diff.cheaper{color:var(--green)}
+.card-title{font-size:1.1rem; font-weight:500; color:var(--text); line-height:1.4; margin-bottom:6px;}
 
-/* share row */
-.share-row{display:flex;align-items:center;justify-content:center;gap:10px;
-  margin-top:32px}
-.share-label{font-size:.75rem;color:var(--text-3)}
-.share-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
-  border-radius:8px;border:1px solid var(--border);background:var(--card);
-  color:var(--text-2);font-size:.72rem;font-weight:600;cursor:pointer;
-  transition:all .15s}
-.share-btn:hover{border-color:var(--border-hi);color:var(--text)}
+.card-rating{font-size:0.8rem; color:var(--amber); margin-top:5px; display:flex; align-items:center; gap:4px;}
+.card-rating.na{color:var(--text-3);}
 
-/* ── Footer ── */
-footer{position:relative;z-index:10;border-top:1px solid var(--border);
-  padding:22px 32px;display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:10px}
-.footer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;
-  color:var(--text-3)}
-.footer-note{font-size:.7rem;color:var(--text-3)}
+.card-price-col{
+    background:rgba(255,255,255,0.02); padding:25px; border-left:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+
+.price-main{font-family:'Syne', sans-serif; font-size:1.8rem; font-weight:800; color:var(--text);}
+.price-main.is-green{color:var(--green); text-shadow:0 0 15px var(--green-glow);}
+
+.cta-btn{
+    margin-top:15px; width:100%; text-align:center; padding:12px;
+    background:var(--accent); color:white; text-decoration:none; border-radius:12px;
+    font-weight:700; font-size:0.8rem; transition:0.3s;
+}
+.cta-btn:hover{filter:brightness(1.2); box-shadow:0 0 20px var(--accent-glow);}
+.cta-btn.search-only{background:rgba(255,255,255,0.1); border:1px solid var(--border);}
+
+/* ── Winner Section ── */
+.winner-banner {
+    background:linear-gradient(90deg, rgba(0, 255, 149, 0.1), rgba(91, 141, 239, 0.1));
+    border:2px solid var(--green); border-radius:var(--r-lg); padding:40px;
+    margin-bottom:30px; display:flex; align-items:center; justify-content:space-between;
+    position:relative; overflow:hidden;
+}
+
+.winner-banner::after {
+    content:'WINNER'; position:absolute; right:-20px; top:-10px; font-size:6rem;
+    font-weight:900; opacity:0.05; font-family:'Syne';
+}
+
+/* ── Loading Overlay (modern spinner) ── */
+.loading{display:none; position:fixed; inset:0; z-index:1000; background:rgba(3,4,7,0.95);
+  flex-direction:column; align-items:center; justify-content:center; gap:25px;}
+.loading.on{display:flex;}
+.loader-ring {
+    width: 80px; height: 80px;
+    border: 4px solid transparent;
+    border-top-color: var(--accent);
+    border-right-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+.loader-ring::after {
+    content: ''; position: absolute; inset: 8px;
+    border: 3px solid transparent;
+    border-bottom-color: var(--accent);
+    border-left-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite reverse;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text{
+    font-family:'Syne', monospace; font-size:0.9rem; letter-spacing:3px;
+    color: var(--text-2); background: rgba(91,141,239,0.15);
+    padding: 8px 20px; border-radius: 40px; backdrop-filter: blur(5px);
+}
 
 /* ── Responsive ── */
-@media(max-width:700px){
-  header{padding:0 16px}
-  .hero{padding:64px 16px 56px}
-  .results{padding:0 16px 72px}
-  .winner-banner{padding:20px}
-  .wb-icon{display:none}
-  .card{grid-template-columns:100px 1fr}
-  .card-price-col{display:none}
-  .card-body{padding:14px 16px}
-  .card-store-row::after{
-    content:attr(data-price);
-    margin-left:auto;font-family:'Syne',sans-serif;font-weight:700;
-    font-size:1rem;color:var(--text)}
-  .card.is-best .card-store-row::after{color:var(--green)}
-  footer{padding:16px}
+@media(max-width:850px){
+    .card{grid-template-columns:1fr; text-align:center;}
+    .card-img{background:none;}
+    .card-price-col{border-left:none; border-top:1px solid var(--border);}
+    header{padding:0 20px;}
 }
-@media(max-width:420px){
-  .hero-title{font-size:2.2rem}
-  .search-btn span{display:none}
+
+/* ── Share row ── */
+.share-row{display:flex; align-items:center; justify-content:center; gap:12px; margin-top:40px;}
+.share-btn{background:rgba(255,255,255,0.05); border:1px solid var(--border);
+  padding:10px 22px; border-radius:100px; font-size:0.8rem; font-weight:600;
+  color:var(--text-2); cursor:pointer; transition:0.2s;}
+.share-btn:hover{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+/* ── Subtle initials watermark ── */
+.initials-watermark{
+    position: fixed; bottom: 12px; right: 16px;
+    font-family: 'Syne', monospace; font-size: 0.65rem;
+    letter-spacing: 1px; color: rgba(255,255,255,0.12);
+    z-index: 100; pointer-events: none;
 }
 </style>
 </head>
 <body>
 
-<div class="bg-gradient"></div>
-<div class="grid-pattern"></div>
+<div class="anime-bg-container">
+    <div class="anime-character"></div>
+    <div class="floating-shapes">
+        <span style="width:300px; height:300px; top:10%; left:10%;"></span>
+        <span style="width:400px; height:400px; bottom:10%; right:10%; background:var(--green);"></span>
+    </div>
+</div>
 
-<!-- Loading overlay -->
+<!-- New loading overlay -->
 <div class="loading" id="loading">
-  <div class="spin"></div>
-  <div class="loading-text">Scanning Prices</div>
-  <div class="loading-stores">
-    <div class="lstore"><span class="lstore-dot" style="background:var(--amazon)"></span>Amazon</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--flipkart)"></span>Flipkart</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--reliancedigital)"></span>Reliance Digital</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--vijaysales)"></span>Vijay Sales</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--snapdeal)"></span>Snapdeal</div>
-    <div class="lstore"><span class="lstore-dot" style="background:var(--shopclues)"></span>ShopClues</div>
-  </div>
+  <div class="loader-ring"></div>
+  <div class="loading-text">SEARCHING</div>
 </div>
 
 <header>
@@ -304,214 +247,140 @@ footer{position:relative;z-index:10;border-top:1px solid var(--border);
     BestPrice.ai
   </a>
   <div class="header-right">
-    <div class="live-badge">Live</div>
-    <div class="stores-badge">6 stores</div>
+    <div class="live-badge">Live Comparison</div>
   </div>
 </header>
 
-<!-- Hero / Search -->
 <section class="hero">
   {% if not (results is defined) %}
-  <div class="hero-eyebrow">⚡ India's fastest price comparison</div>
-  <h1 class="hero-title">Find the <span>lowest price</span><br>in India</h1>
-  <p class="hero-sub">Search any product or paste a store link. We compare Amazon, Flipkart, Reliance Digital, Vijay Sales, Snapdeal &amp; ShopClues — instantly.</p>
+  <div class="hero-eyebrow">⚡ The Ultimate Hunt for Deals</div>
+  <h1 class="hero-title">Find the <span>Lowest Price</span><br>Instantly</h1>
+  <p style="color:var(--text-2); max-width:600px; margin:0 auto 40px;">Stop overpaying. We scan Amazon, Flipkart, Reliance, Vijay Sales, and Meesho so you don't have to.</p>
   {% endif %}
 
-  <div class="search-wrap" style="{% if results is defined %}margin-bottom:48px{% endif %}">
+  <!-- Clickable store pills linking to homepages -->
+  <div class="store-row">
+    <a href="https://www.amazon.in" target="_blank" rel="noopener" class="store-pill">Amazon</a>
+    <a href="https://www.flipkart.com" target="_blank" rel="noopener" class="store-pill">Flipkart</a>
+    <a href="https://www.reliancedigital.in" target="_blank" rel="noopener" class="store-pill">Reliance Digital</a>
+    <a href="https://www.vijaysales.com" target="_blank" rel="noopener" class="store-pill">Vijay Sales</a>
+    <a href="https://www.meesho.com" target="_blank" rel="noopener" class="store-pill">Meesho</a>
+  </div>
+
+  <div class="search-wrap">
     <form class="search-box" id="searchForm" method="POST" action="/">
-      <span class="search-icon">🔍</span>
-      <input
-        type="text" name="product_name" autocomplete="off" spellcheck="false"
-        placeholder="iPhone 16 Pro · Samsung S25 · paste any link…"
-        value="{{ query if query else '' }}"
-        required>
-      <button type="submit" class="search-btn"><span>Search</span> →</button>
+      <input type="text" name="product_name" autocomplete="off" 
+             placeholder="What are you looking for today?..." 
+             value="{{ query if query else '' }}" required>
+      <button type="submit" class="search-btn">Search</button>
     </form>
-    {% if not (results is defined) %}
-    <div class="store-row">
-      <div class="store-pill"><span class="sdot" style="background:var(--amazon)"></span>Amazon.in</div>
-      <div class="store-pill"><span class="sdot" style="background:var(--flipkart)"></span>Flipkart</div>
-      <div class="store-pill"><span class="sdot" style="background:var(--reliancedigital)"></span>Reliance Digital</div>
-      <div class="store-pill"><span class="sdot" style="background:var(--vijaysales)"></span>Vijay Sales</div>
-      <div class="store-pill"><span class="sdot" style="background:var(--snapdeal)"></span>Snapdeal</div>
-      <div class="store-pill"><span class="sdot" style="background:var(--shopclues)"></span>ShopClues</div>
-    </div>
-    {% endif %}
   </div>
 </section>
 
 {% if results is defined %}
 <div class="results">
-
-  <!-- Results header -->
-  <div class="results-header">
+  <div class="results-header" style="margin-bottom:40px;">
     <div>
-      <div class="results-title">Results for <strong>"{{ query }}"</strong></div>
-      {% set found_count = results.stores.values() | selectattr('price', '!=', float('inf')) | list | length %}
-      <div class="results-meta">Found on {{ found_count }} of 6 stores</div>
-    </div>
-    <div class="sort-controls">
-      <button class="sort-btn active" onclick="sortCards('price')">Lowest Price</button>
-      <button class="sort-btn" onclick="sortCards('store')">Store Name</button>
+        <h2 style="font-family:'Syne'; font-size:1.8rem;">Results for "{{ query }}"</h2>
+        <p style="color:var(--text-3); font-size:0.9rem;">Found on {{ results.stores.values() | selectattr('price', '!=', float('inf')) | list | length }} stores</p>
     </div>
   </div>
 
-  <!-- Winner banner -->
   {% if results.best %}
   <div class="winner-banner">
-    <div class="wb-left">
-      <div class="wb-icon">🏆</div>
       <div>
-        <div class="wb-label">Best Price Found</div>
-        <div class="wb-price">{{ results.best.display_price }}</div>
-        <div class="wb-store">on <strong>{{ results.best.store }}</strong></div>
-        {% if results.best.savings_display %}
-        <div class="wb-savings">{{ results.best.savings_display }} cheaper than highest</div>
-        {% endif %}
+          <span style="color:var(--green); font-weight:800; font-size:0.8rem; letter-spacing:2px;">BEST DEAL DETECTED</span>
+          <div class="price-main is-green" style="font-size:3.5rem;">{{ results.best.display_price }}</div>
+          <p style="color:var(--text-2);">on <strong>{{ results.best.store }}</strong></p>
       </div>
-    </div>
-    <a href="{{ results.stores[results.best.store].link }}" target="_blank" rel="noopener" class="wb-cta">
-      Buy Now ↗
-    </a>
+      <a href="{{ results.stores[results.best.store].link }}" target="_blank" class="cta-btn" style="width:auto; padding:15px 40px; background:var(--green); color:#000;">GRAB DEAL ↗</a>
   </div>
   {% endif %}
 
-  <!-- Cards -->
   <div class="cards" id="cardsGrid">
-    {% set found_stores = [] %}
-    {% set notfound_stores = [] %}
+    {% set all_stores = [] %}
     {% for store, data in results.stores.items() %}
-      {% if data.price != float('inf') %}{% set _ = found_stores.append((store, data)) %}{% endif %}
-      {% if data.price == float('inf') %}{% set _ = notfound_stores.append((store, data)) %}{% endif %}
+      {% set _ = all_stores.append((store, data)) %}
     {% endfor %}
 
-    {# Sort found stores by price ascending #}
-    {% for store, data in found_stores | sort(attribute='1.price') %}
+    {% set found = all_stores | selectattr('1.price', '!=', float('inf')) | list | sort(attribute='1.price') %}
+    {% set notfound = all_stores | selectattr('1.price', '==', float('inf')) | list | sort(attribute='0') %}
+
+    {% for store, data in found %}
     {% set is_best = results.best and results.best.store == store %}
-    {% set store_key = store | lower | replace(' ', '') %}
-    <div class="card {% if is_best %}is-best{% endif %}"
-         data-price="{{ data.price }}"
-         data-store="{{ store }}"
-         data-store-mobile="{{ data.display_price }}">
+    <div class="card {% if is_best %}is-best{% endif %}" data-price="{{ data.price }}" data-store="{{ store }}">
       <div class="card-img">
         {% if data.image %}
-          <img src="{{ data.image }}" alt="{{ data.title }}" loading="lazy">
+          <img src="{{ data.image }}" alt="{{ data.title }}">
         {% else %}
-          <div class="card-img-placeholder">{{ store[0] }}</div>
+          <div style="font-size:3rem; font-weight:800; opacity:0.1;">{{ store[0] }}</div>
         {% endif %}
       </div>
       <div class="card-body">
-        <div class="card-store-row" data-price="{{ data.display_price }}">
-          <span class="store-dot" style="background:var(--{{ store_key }})"></span>
-          <span class="store-name">{{ store }}</span>
-          {% if is_best %}<span class="best-tag">Best</span>{% endif %}
-        </div>
-        <div class="card-title">{{ data.title }}</div>
-        {% if data.rating != 'N/A' %}
+        <span class="store-badge-small">{{ store }}</span>
+        <h3 class="card-title">{{ data.title }}</h3>
+        {% if data.rating and data.rating != 'N/A' %}
         <div class="card-rating">★ {{ data.rating }}</div>
+        {% else %}
+        <div class="card-rating na">Rating not available</div>
         {% endif %}
       </div>
       <div class="card-price-col">
-        <div class="card-price {% if is_best %}best-price{% endif %}">{{ data.display_price }}</div>
-        {% if results.best and not is_best and results.best.store in results.stores %}
-          {% set best_p = results.stores[results.best.store].price %}
-          {% if best_p != float('inf') and data.price != float('inf') %}
-            {% set diff = data.price - best_p %}
-            {% if diff > 0 %}
-            <div class="card-diff">+₹{{ "{:,.0f}".format(diff) }} vs best</div>
-            {% endif %}
-          {% endif %}
-        {% endif %}
-        <a href="{{ data.link }}" target="_blank" rel="noopener" class="card-btn">View ↗</a>
+        <div class="price-main {% if is_best %}is-green{% endif %}">{{ data.display_price }}</div>
+        <a href="{{ data.link }}" target="_blank" class="cta-btn">View Store</a>
       </div>
     </div>
     {% endfor %}
 
-    {# Collapsed "not found" entries at the bottom #}
-    {% for store, data in notfound_stores %}
-    {% set store_key = store | lower | replace(' ', '') %}
+    {# Not found stores #}
+    {% for store, data in notfound %}
     <div class="card is-notfound" data-price="999999999" data-store="{{ store }}">
       <div class="card-img">
-        <div class="card-img-placeholder">{{ store[0] }}</div>
+        <div style="font-size:3rem; font-weight:800; opacity:0.1;">{{ store[0] }}</div>
       </div>
       <div class="card-body">
-        <div class="card-store-row">
-          <span class="store-dot" style="background:var(--{{ store_key }})"></span>
-          <span class="store-name">{{ store }}</span>
-        </div>
-        <div class="card-title" style="font-style:italic;color:var(--text-3)">Product not listed on this store</div>
+        <span class="store-badge-small">{{ store }}</span>
+        <div class="card-title" style="color:var(--text-3); font-style:italic;">Product not listed on this store</div>
+        <div class="card-rating na" style="margin-top:5px;">—</div>
       </div>
       <div class="card-price-col">
-        <div class="card-notfound-price">Not listed</div>
-        <a href="{{ data.link }}" target="_blank" rel="noopener" class="card-btn">Search ↗</a>
+        <div class="notfound-price" style="font-size:1rem; color:var(--text-3); margin-bottom:15px;">Not found</div>
+        <a href="{{ data.link }}" target="_blank" class="cta-btn search-only">Search ↗</a>
       </div>
     </div>
     {% endfor %}
   </div>
-
-  <!-- Share row -->
+  
+  <!-- Share row: Copy Link + WhatsApp -->
   <div class="share-row">
-    <span class="share-label">Share results:</span>
-    <button class="share-btn" onclick="copyLink()">🔗 Copy link</button>
+    <button class="share-btn" onclick="copyLink()">🔗 Copy Link</button>
     <button class="share-btn" onclick="shareWhatsApp()">💬 WhatsApp</button>
   </div>
-
 </div>
 {% endif %}
 
-<footer>
-  <div class="footer-logo">BestPrice.ai</div>
-  <div class="footer-note">Prices scraped live · may vary slightly · not affiliated with any store</div>
+<footer style="padding:60px 20px 20px; border-top:1px solid var(--border); text-align:center; opacity:0.5;">
+    <p style="font-family:'Syne'; font-weight:800;">BESTPRICE.AI</p>
+    <p style="font-size:0.7rem; margin-top:10px;">Scraped live from top Indian retailers.</p>
 </footer>
 
+<div class="initials-watermark">PSR</div>
+
 <script>
-// Show loading on search submit
 document.getElementById('searchForm').addEventListener('submit', function() {
   document.getElementById('loading').classList.add('on');
 });
 
-// Animate cards in on page load
-(function() {
-  const cards = document.querySelectorAll('.card, .winner-banner');
-  cards.forEach((el, i) => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    el.style.transition = 'opacity .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1)';
-    setTimeout(() => {
-      el.style.opacity = el.classList.contains('is-notfound') ? '' : '1';
-      el.style.transform = 'translateY(0)';
-    }, 60 + i * 60);
-  });
-})();
-
-// Sort cards
-let currentSort = 'price';
-function sortCards(by) {
-  currentSort = by;
-  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(by)));
-
-  const grid = document.getElementById('cardsGrid');
-  if (!grid) return;
-  const cards = [...grid.querySelectorAll('.card:not(.is-notfound)')];
-  const notfound = [...grid.querySelectorAll('.card.is-notfound')];
-
-  cards.sort((a, b) => {
-    if (by === 'price') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
-    return a.dataset.store.localeCompare(b.dataset.store);
-  });
-
-  cards.forEach(c => grid.appendChild(c));
-  notfound.forEach(c => grid.appendChild(c));
-}
-
-// Share helpers
+// Copy link helper
 function copyLink() {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    const btn = event.target;
-    btn.textContent = '✅ Copied!';
-    setTimeout(() => btn.textContent = '🔗 Copy link', 2000);
-  });
+  navigator.clipboard.writeText(window.location.href);
+  const btn = event.target;
+  const original = btn.textContent;
+  btn.textContent = '✅ Copied!';
+  setTimeout(() => btn.textContent = original, 2000);
 }
+
+// WhatsApp share helper
 function shareWhatsApp() {
   const q = document.querySelector('input[name="product_name"]')?.value || '';
   const text = `Check out the best price for "${q}" on BestPrice.ai: ${window.location.href}`;

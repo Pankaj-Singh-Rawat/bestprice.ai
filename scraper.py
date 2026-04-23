@@ -1,14 +1,7 @@
 """
 scraper.py  —  BestPrice.ai
-Scrapes Amazon, Flipkart, Reliance Digital, Vijay Sales, Snapdeal, ShopClues.
-
-Key design decisions:
-- Removed the brittle GENERIC_CATEGORIES mapping; replaced with a lightweight
-  keyword-overlap + brand-enforcement filter that works for ANY product.
-- Best deal is picked from ALL stores, not just Amazon/Flipkart/Reliance.
-- Parallel scraping with a global thread pool; per-store 15 s timeout.
-- Simple in-process LRU cache (300 entries, 10-min TTL) to avoid hammering
-  stores for repeated identical queries.
+Scrapes: Amazon, Flipkart, Reliance Digital, Vijay Sales, Meesho.
+Accessory filter ensures "iphone" doesn't return cases, but "iphone case" does.
 """
 
 from __future__ import annotations
@@ -19,7 +12,6 @@ import re
 import time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, wait
-from functools import lru_cache
 from urllib.parse import urljoin
 
 import requests
@@ -37,23 +29,20 @@ RE_LEADING_NUM   = re.compile(r'^\d+\.\s*')
 RE_JUNK_PRICE    = re.compile(r'[₹,\s]')
 
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 ]
 BROWSERS = ["chrome124", "chrome123", "chrome120", "chrome116"]
 
-# Words that indicate the result is an accessory, not the main product
 ACCESSORY_WORDS = frozenset([
-    'case', 'cover', 'protector', 'cable', 'charger', 'adapter',
-    'skin', 'stand', 'mount', 'holder', 'pouch', 'sleeve',
-    'bumper', 'shield', 'wrap', 'film', 'foil', 'sticker', 'decal',
-    'tempered glass', 'screen guard', 'installation kit',
-    'installation service', 'toy model', 'miniature',
+    'case', 'cases', 'cover', 'covers', 'protector', 'protectors', 'cable', 'cables',
+    'charger', 'chargers', 'adapter', 'adapters', 'skin', 'skins', 'stand', 'stands',
+    'mount', 'mounts', 'holder', 'holders', 'pouch', 'pouches', 'sleeve', 'sleeves',
+    'bumper', 'bumpers', 'shield', 'shields', 'wrap', 'wraps', 'film', 'films',
+    'foil', 'foils', 'sticker', 'stickers', 'decal', 'decals', 'tempered glass',
+    'screen guard', 'installation kit', 'installation service', 'toy model', 'miniature',
 ])
 _ACC_PATTERNS = [re.compile(r'\b' + re.escape(a) + r'\b', re.I) for a in ACCESSORY_WORDS]
 
@@ -71,9 +60,7 @@ STOP_WORDS = frozenset([
     'was', 'has', 'not', 'but', 'all', 'any',
 ])
 
-
 # ── Helpers ─────────────────────────────────────────────────────────────────
-
 def clean_price(price_str) -> float:
     if not price_str:
         return float('inf')
@@ -85,62 +72,36 @@ def clean_price(price_str) -> float:
     except (ValueError, OverflowError):
         return float('inf')
 
-
 def _fmt(price: float) -> str:
     return f"₹{price:,.0f}" if price != float('inf') else "Not Found"
 
-
-# ── Product relevance filter ─────────────────────────────────────────────────
-
 def is_correct_product(query: str, title: str) -> bool:
-    """
-    Lightweight relevance check — works for any product category.
-    Rules (in order):
-      1. Reject accessories if the query isn't asking for one.
-      2. Enforce brand: if query names a known brand, title must too.
-      3. Word-overlap: at least 35 % of meaningful query words appear in title.
-         Short queries (≤2 words) only need 1 matching word.
-    """
     if not query or not title:
         return False
-
     q = query.lower().strip()
     t = RE_LEADING_NUM.sub('', title.lower().strip())
-
-    # 1. Accessory gate
     query_wants_acc = any(p.search(q) for p in _ACC_PATTERNS)
     if not query_wants_acc and any(p.search(t) for p in _ACC_PATTERNS):
         return False
-
-    # 2. Brand gate
     for brand in KEY_BRANDS:
         if re.search(r'\b' + re.escape(brand) + r'\b', q):
             if not re.search(r'\b' + re.escape(brand) + r'\b', t):
                 return False
-
-    # 3. Word overlap
-    q_words = [w for w in RE_WORDS.findall(q)
-               if len(w) > 1 and w not in STOP_WORDS]
+    q_words = [w for w in RE_WORDS.findall(q) if len(w) > 1 and w not in STOP_WORDS]
     if not q_words:
         return True
-
-    t_text = t  # use full title text for substring matching
-    matched = sum(1 for w in q_words if w in t_text)
-
+    matched = sum(1 for w in q_words if w in t)
     if len(q_words) <= 2:
         return matched >= 1
     return matched / len(q_words) >= 0.35
 
-
 # ── HTTP helpers ─────────────────────────────────────────────────────────────
-
 _session = requests.Session()
 _session.headers.update({
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-IN,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
 })
-
 
 def _cffi_get(url: str, timeout: int = 12, extra_headers: dict | None = None):
     headers = {
@@ -157,19 +118,13 @@ def _cffi_get(url: str, timeout: int = 12, extra_headers: dict | None = None):
             if r.status_code == 200:
                 return r
             if r.status_code in (403, 429, 503):
-                # Don't bother retrying with other browsers for hard blocks
                 return None
         except Exception as e:
             print(f"    [{browser}] {type(e).__name__}: {e}")
     return None
 
-
-# ── Amazon ───────────────────────────────────────────────────────────────────
-
-_RE_AMAZON_TITLE_JUNK = re.compile(
-    r'^(sponsored|ad|advertisement|\d[\d.]* out of \d[\d.]* stars?)', re.I
-)
-
+# ── Amazon ─────────────────────────────────────────────────────────────
+_RE_AMAZON_TITLE_JUNK = re.compile(r'^(sponsored|ad|advertisement|\d[\d.]* out of \d[\d.]* stars?)', re.I)
 
 def _amazon_title(card) -> str:
     for sel in [
@@ -198,7 +153,6 @@ def _amazon_title(card) -> str:
             return t
     return ''
 
-
 def _amazon_price(card) -> float:
     for sel in ['.a-price .a-offscreen', 'span.a-offscreen']:
         for el in card.select(sel):
@@ -215,7 +169,6 @@ def _amazon_price(card) -> float:
         return clean_price(m.group(1))
     return float('inf')
 
-
 def scrape_amazon(query: str) -> dict | None:
     safe_q = urllib.parse.quote(query)
     url = f"https://www.amazon.in/s?k={safe_q}"
@@ -226,12 +179,10 @@ def scrape_amazon(query: str) -> dict | None:
         if 'captcha' in resp.text.lower() or 'robot check' in resp.text.lower():
             print("  [Amazon] Blocked/CAPTCHA")
             return None
-
         soup = BeautifulSoup(resp.text, 'lxml')
         all_cards = soup.find_all('div', {'data-component-type': 's-search-result'})
         organic = [c for c in all_cards if not c.find('span', string=RE_SPONSORED)]
         sponsored = [c for c in all_cards if c.find('span', string=RE_SPONSORED)]
-
         def _parse(card):
             title = _amazon_title(card)
             if not title or not is_correct_product(query, title):
@@ -249,9 +200,7 @@ def scrape_amazon(query: str) -> dict | None:
             link = urljoin("https://www.amazon.in", link_el['href']) if link_el else url
             img_el = card.select_one('img.s-image')
             img = img_el.get('src', '') if img_el else ''
-            return {"price": price, "display_price": _fmt(price),
-                    "rating": rating, "link": link, "title": title[:80], "image": img}
-
+            return {"price": price, "display_price": _fmt(price), "rating": rating, "link": link, "title": title[:80], "image": img}
         for card in organic + sponsored:
             r = _parse(card)
             if r:
@@ -261,9 +210,7 @@ def scrape_amazon(query: str) -> dict | None:
         print(f"  [Amazon] Error: {e}")
     return None
 
-
-# ── Flipkart ─────────────────────────────────────────────────────────────────
-
+# ── Flipkart ───────────────────────────────────────────────────────────
 def scrape_flipkart(query: str) -> dict | None:
     safe_q = urllib.parse.quote(query)
     url = f"https://www.flipkart.com/search?q={safe_q}"
@@ -272,7 +219,6 @@ def scrape_flipkart(query: str) -> dict | None:
         if not resp:
             return None
         soup = BeautifulSoup(resp.text, 'lxml')
-
         for link in soup.select('a[href*="/p/"]'):
             text_content = link.get_text(' ', strip=True)
             if '₹' not in text_content:
@@ -283,8 +229,6 @@ def scrape_flipkart(query: str) -> dict | None:
             price = clean_price(pm.group(1))
             if price == float('inf'):
                 continue
-
-            # Title: prefer img alt, then longest non-price div text
             title = ''
             img = link.select_one('img')
             if img and len(img.get('alt', '')) > 5:
@@ -300,17 +244,14 @@ def scrape_flipkart(query: str) -> dict | None:
             title = RE_LEADING_NUM.sub('', title).strip()
             if not is_correct_product(query, title):
                 continue
-
             rating = "N/A"
             for d in link.find_all('div'):
                 if RE_RATING_DIV.match(d.get_text(strip=True)):
                     rating = d.get_text(strip=True)
                     break
-
             fk_img = ''
             if img:
                 fk_img = img.get('src') or img.get('data-src') or ''
-
             print(f"  [Flipkart] ✅ {title[:50]} @ {_fmt(price)}")
             return {"price": price, "display_price": _fmt(price), "rating": rating,
                     "link": urljoin("https://www.flipkart.com", link.get('href', '#')),
@@ -319,13 +260,10 @@ def scrape_flipkart(query: str) -> dict | None:
         print(f"  [Flipkart] Error: {e}")
     return None
 
-
-# ── Reliance Digital ─────────────────────────────────────────────────────────
-
+# ── Reliance Digital ────────────────────────────────────────────────────
 def scrape_reliance(query: str) -> dict | None:
     safe_q = urllib.parse.quote(query)
-    url = (f"https://www.reliancedigital.in/ext/raven-api/catalog/v1.0/products"
-           f"?q={safe_q}&page_no=1&page_size=24")
+    url = f"https://www.reliancedigital.in/ext/raven-api/catalog/v1.0/products?q={safe_q}&page_no=1&page_size=24"
     try:
         r = _session.get(url, headers={
             "User-Agent": random.choice(USER_AGENTS),
@@ -353,225 +291,186 @@ def scrape_reliance(query: str) -> dict | None:
                     img = 'https://www.reliancedigital.in' + img
             print(f"  [Reliance] ✅ {name[:50]} @ {_fmt(price)}")
             return {"price": price, "display_price": _fmt(price), "rating": "N/A",
-                    "link": (f"https://www.reliancedigital.in/product/{slug}"
-                             if slug else f"https://www.reliancedigital.in/search?q={safe_q}"),
+                    "link": f"https://www.reliancedigital.in/product/{slug}" if slug else f"https://www.reliancedigital.in/search?q={safe_q}",
                     "title": name[:80], "image": img}
     except Exception as e:
         print(f"  [Reliance] Error: {e}")
     return None
 
-
-# ── Vijay Sales ───────────────────────────────────────────────────────────────
+# ── Vijay Sales ─────────────────────────────────────────────────────────
 def scrape_vijaysales(query: str) -> dict | None:
-    safe_q = urllib.parse.quote(query)
-    url = f"https://www.vijaysales.com/search?q={safe_q}"
-
+    params = {"q": query, "page": 1, "rows": 30}
+    url = "https://mdm.vijaysales.com/web/api/search/unbxd-search/v1"
+    print(f"  [Vijay Sales] API request")
     try:
-        resp = _cffi_get(url, extra_headers={"Referer": "https://www.vijaysales.com/"})
-        if not resp:
+        headers = {
+            "User-Agent": random.choice(USER_AGENTS),
+            "Accept": "application/json",
+            "Referer": "https://www.vijaysales.com/",
+            "Origin": "https://www.vijaysales.com",
+        }
+        resp = _session.get(url, headers=headers, params=params, timeout=12)
+        if resp.status_code != 200:
+            print(f"  [Vijay Sales] API returned {resp.status_code}")
             return None
-
-        # 🔥 CRITICAL FIX: extract JSON data embedded in page
-        json_match = re.search(r'window\.__INITIAL_STATE__\s*=\s*({.*?});', resp.text)
-
-        if json_match:
-            try:
-                data = json.loads(json_match.group(1))
-
-                products = data.get("search", {}).get("products", [])
-                for item in products:
-                    title = item.get("name", "")
-                    if not is_correct_product(query, title):
-                        continue
-
-                    price = float(item.get("price", 0))
-                    if price <= 0:
-                        continue
-
-                    link = "https://www.vijaysales.com" + item.get("url", "")
-                    img = item.get("image", "")
-
-                    return {
-                        "price": price,
-                        "display_price": _fmt(price),
-                        "rating": "N/A",
-                        "link": link,
-                        "title": title[:80],
-                        "image": img
-                    }
-            except:
-                pass
-
-        # fallback (your old logic but stricter)
-        soup = BeautifulSoup(resp.text, 'lxml')
-
-        for card in soup.select("a[href*='/p/']"):
-            text = card.get_text()
-
-            m = RE_PRICE_SYMBOL.search(text)
-            if not m:
-                continue
-
-            price = clean_price(m.group(1))
-            if price == float('inf'):
-                continue
-
-            title = card.get("title") or text.strip()
-            if not is_correct_product(query, title):
-                continue
-
-            return {
-                "price": price,
-                "display_price": _fmt(price),
-                "rating": "N/A",
-                "link": urljoin("https://www.vijaysales.com", card['href']),
-                "title": title[:80],
-                "image": ""
-            }
-
-    except Exception as e:
-        print(f"[VijaySales] Error: {e}")
-
-    return None
-
-
-# ── Snapdeal ─────────────────────────────────────────────────────────────────
-
-def scrape_snapdeal(query: str) -> dict | None:
-    safe_q = urllib.parse.quote(query)
-    url = f"https://www.snapdeal.com/search?keyword={safe_q}"
-
-    try:
-        resp = _cffi_get(url)
-        if not resp:
+        data = resp.json()
+        products = data.get('response', {}).get('products', [])
+        if not products:
+            print(f"  [Vijay Sales] No products found")
             return None
-
-        soup = BeautifulSoup(resp.text, 'lxml')
-
-        cards = soup.select("div.product-tuple-listing")
-
-        for card in cards:
-            title_el = card.select_one("p.product-title")
-            price_el = card.select_one("span.product-price")
-
-            if not title_el or not price_el:
+        for item in products:
+            title = item.get('title') or item.get('name')
+            if not title or not is_correct_product(query, title):
                 continue
-
-            title = title_el.get_text(strip=True)
-            price = clean_price(price_el.get_text())
-
-            if price == float('inf'):
+            price = float(item.get('price', 0))
+            if price <= 0:
                 continue
-
-            if not is_correct_product(query, title):
-                continue
-
-            link = card.get("data-href", "")
-            if link and not link.startswith("http"):
-                link = "https://www.snapdeal.com" + link
-
-            img_el = card.select_one("img.product-image")
-
-            return {
-                "price": price,
-                "display_price": _fmt(price),
-                "rating": "N/A",
-                "link": link or url,
-                "title": title[:80],
-                "image": img_el.get("src", "") if img_el else ""
-            }
-
-    except Exception as e:
-        print(f"[Snapdeal] Error: {e}")
-
-    return None
-
-# ── ShopClues ─────────────────────────────────────────────────────────────────
-
-def scrape_shopclues(query: str) -> dict | None:
-    safe_q = urllib.parse.quote(query)
-    url = f"https://www.shopclues.com/search?q={safe_q}"
-
-    try:
-        resp = _cffi_get(url)
-        if not resp:
-            return None
-
-        soup = BeautifulSoup(resp.text, 'lxml')
-
-        cards = soup.select("div.search_blocks")
-
-        for card in cards:
-            title_el = card.select_one("h2")
-            price_el = card.select_one(".p_price")
-
-            if not title_el or not price_el:
-                continue
-
-            title = title_el.get("title") or title_el.get_text(strip=True)
-            price = clean_price(price_el.get_text())
-
-            if price == float('inf'):
-                continue
-
-            if not is_correct_product(query, title):
-                continue
-
-            link_el = card.select_one("a[href]")
-            img_el = card.select_one("img")
-
-            link = link_el['href'] if link_el else url
-            if link and not link.startswith("http"):
-                link = "https://www.shopclues.com" + link
-
+            link = item.get('productUrl')
+            if link and not link.startswith('http'):
+                link = 'https://www.vijaysales.com' + link
+            if not link:
+                link = f"https://www.vijaysales.com/search?q={urllib.parse.quote(query)}"
+            img_list = item.get('imageUrl', [])
+            img = img_list[0] if img_list else ''
+            if img and not img.startswith('http'):
+                img = 'https://www.vijaysales.com' + img
+            print(f"  [Vijay Sales] ✅ {title[:50]} @ {_fmt(price)}")
             return {
                 "price": price,
                 "display_price": _fmt(price),
                 "rating": "N/A",
                 "link": link,
                 "title": title[:80],
-                "image": img_el.get("src", "") if img_el else ""
+                "image": img,
             }
-
     except Exception as e:
-        print(f"[ShopClues] Error: {e}")
-
+        print(f"  [Vijay Sales] API error: {e}")
     return None
 
+# ── Meesho strict filter (accessory + word match) ──────────────────────
+def _strict_meesho_filter(query: str, title: str) -> bool:
+    q_lower = query.lower()
+    t_lower = title.lower()
+    for pattern in _ACC_PATTERNS:
+        if pattern.search(t_lower) and not pattern.search(q_lower):
+            return False
+    q_words = [w for w in RE_WORDS.findall(q_lower) if len(w) > 2]
+    if len(q_words) <= 3:
+        found = False
+        for w in q_words:
+            if re.search(r'\b' + re.escape(w) + r'\b', t_lower):
+                found = True
+                break
+        if not found:
+            return False
+    return True
 
-# ── Orchestrator ──────────────────────────────────────────────────────────────
+# ── Meesho (API based) ──────────────────────────────────────────────────
+def scrape_meesho(query: str) -> dict | None:
+    url = "https://www.meesho.com/api/v1/products/search"
+    print(f"  [Meesho] API request")
+    try:
+        from curl_cffi import requests as cffi_requests
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Content-Type": "application/json",
+            "Referer": f"https://www.meesho.com/search?q={urllib.parse.quote(query)}&searchType=manual&searchIdentifier=text_search",
+            "Origin": "https://www.meesho.com",
+            "meesho-iso-country-code": "IN",
+        }
+        
+        payload = {
+            "query": query,
+            "type": "text_search",
+            "page": 1,
+            "offset": 0,
+            "limit": 20,
+            "cursor": None,
+            "isDevicePhone": False
+        }
+        
+        resp = cffi_requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            impersonate="chrome124",
+            timeout=12
+        )
+        
+        if resp.status_code != 200:
+            print(f"  [Meesho] API returned HTTP {resp.status_code}")
+            return None
+        
+        data = resp.json()
+        products = data.get("catalogs", [])
+        if not products:
+            print(f"  [Meesho] No products found")
+            return None
+        
+        for item in products[:20]:
+            title = item.get("name")
+            if not title:
+                continue
+            if not _strict_meesho_filter(query, title):
+                continue
+            price = float(item.get("min_catalog_price", 0))
+            if price <= 0:
+                continue
+            if not is_correct_product(query, title):
+                continue
+            
+            slug = item.get("slug")
+            product_id = item.get("product_id")
+            if slug:
+                product_url = f"https://www.meesho.com/{slug}/p/{product_id}" if product_id else f"https://www.meesho.com/{slug}"
+            else:
+                product_url = f"https://www.meesho.com/search?q={urllib.parse.quote(query)}"
+            images = item.get("product_images", [])
+            img = images[0].get("url") if images else item.get("image", "")
+            if img and not img.startswith("http"):
+                img = "https:" + img if img.startswith("//") else img
+            rating = str(item.get("catalog_reviews_summary", {}).get("average_rating", "N/A"))
+            if rating in ("0", "None"):
+                rating = "N/A"
+            print(f"  [Meesho] ✅ {title[:50]} @ {_fmt(price)}")
+            return {
+                "price": price,
+                "display_price": _fmt(price),
+                "rating": rating,
+                "link": product_url,
+                "title": title[:80],
+                "image": img,
+            }
+    except Exception as e:
+        print(f"  [Meesho] Error: {e}")
+    return None
 
+# ── Orchestrator (5 stores) ─────────────────────────────────────────────────
 STORES: dict[str, callable] = {
-    "Amazon":           scrape_amazon,
     "Flipkart":         scrape_flipkart,
+    "Amazon":           scrape_amazon,
     "Reliance Digital": scrape_reliance,
     "Vijay Sales":      scrape_vijaysales,
-    "Snapdeal":         scrape_snapdeal,
-    "ShopClues":        scrape_shopclues,
+    "Meesho":           scrape_meesho,
 }
-
 _executor = ThreadPoolExecutor(max_workers=len(STORES))
-
-# Simple TTL cache: dict of {query: (timestamp, result)}
 _CACHE: dict[str, tuple[float, dict]] = {}
-_CACHE_TTL = 600  # 10 minutes
-
+_CACHE_TTL = 600
 
 def get_product_data(query: str, timeout: float = 18.0) -> dict:
     q = query.strip().lower()
     now = time.time()
-
-    # Cache hit?
     if q in _CACHE:
         ts, cached = _CACHE[q]
         if now - ts < _CACHE_TTL:
             print(f"[Cache] hit for '{q}'")
             return cached
-
     t0 = time.time()
     safe_q = urllib.parse.quote(query)
     print(f"\n[Searching] {query}")
-
     results: dict = {
         store: {
             "price": float('inf'),
@@ -583,10 +482,8 @@ def get_product_data(query: str, timeout: float = 18.0) -> dict:
         }
         for store in STORES
     }
-
     future_map = {_executor.submit(fn, query): store for store, fn in STORES.items()}
     done, pending = wait(future_map, timeout=timeout)
-
     for future in done:
         store = future_map[future]
         try:
@@ -595,24 +492,20 @@ def get_product_data(query: str, timeout: float = 18.0) -> dict:
                 results[store] = r
         except Exception as e:
             print(f"  [{store}] Exception: {e}")
-
     for future in pending:
         store = future_map[future]
         print(f"  [{store}] Timed out — skipped")
         future.cancel()
 
-    # Best deal from ALL stores that returned a price
+    # Find best deal (no price filter anymore)
     best_store, lowest = None, float('inf')
     for store, data in results.items():
         p = data.get('price', float('inf'))
         if p < lowest:
             lowest, best_store = p, store
-
-    # Savings vs most expensive store found
     prices_found = [d['price'] for d in results.values() if d['price'] != float('inf')]
     max_price = max(prices_found) if prices_found else float('inf')
     savings = (max_price - lowest) if (max_price != float('inf') and lowest != float('inf') and max_price > lowest) else 0
-
     best_data = None
     if best_store and lowest != float('inf'):
         best_data = {
@@ -621,12 +514,10 @@ def get_product_data(query: str, timeout: float = 18.0) -> dict:
             "savings": int(savings),
             "savings_display": _fmt(savings) if savings > 0 else None,
         }
-
     out = {"stores": results, "best": best_data}
     _CACHE[q] = (time.time(), out)
     print(f"  [Total] {time.time() - t0:.1f}s")
     return out
-
 
 if __name__ == "__main__":
     result = get_product_data("samsung galaxy s24")
