@@ -169,43 +169,85 @@ def _amazon_price(card) -> float:
         return clean_price(m.group(1))
     return float('inf')
 
-def scrape_amazon(query: str) -> dict | None:
+def scrape_amazon(query):
     safe_q = urllib.parse.quote(query)
     url = f"https://www.amazon.in/s?k={safe_q}"
     try:
         resp = _cffi_get(url, extra_headers={"Referer": "https://www.amazon.in/"})
         if not resp:
             return None
-        if 'captcha' in resp.text.lower() or 'robot check' in resp.text.lower():
+        print(f"  [Amazon] Status: {resp.status_code}")
+
+        page_lower = resp.text.lower()
+        if 's-search-result' not in resp.text or 'captcha' in page_lower or 'robot check' in page_lower:
             print("  [Amazon] Blocked/CAPTCHA")
             return None
+
         soup = BeautifulSoup(resp.text, 'lxml')
-        all_cards = soup.find_all('div', {'data-component-type': 's-search-result'})
-        organic = [c for c in all_cards if not c.find('span', string=RE_SPONSORED)]
-        sponsored = [c for c in all_cards if c.find('span', string=RE_SPONSORED)]
-        def _parse(card):
-            title = _amazon_title(card)
-            if not title or not is_correct_product(query, title):
+        cards = soup.find_all('div', {'data-component-type': 's-search-result'})
+        print(f"  [Amazon] Cards found: {len(cards)}")
+
+        def is_sponsored(card):
+            if card.get('data-component-type') == 'sp-sponsored-result':
+                return True
+            if card.find('span', string=re.compile(r'^Sponsored$', re.I)):
+                return True
+            return False
+
+        def parse_card(card):
+            title_elem = card.select_one('h2 span')
+            if not title_elem:
                 return None
-            price = _amazon_price(card)
+            title_text = title_elem.get_text(strip=True)
+            if len(title_text) < 5:
+                return None
+
+            price = float('inf')
+            pe = card.select_one('.a-price-whole')
+            if pe:
+                price = clean_price(pe.get_text(strip=True))
+            if price == float('inf'):
+                os_e = card.select_one('.a-price .a-offscreen')
+                if os_e:
+                    price = clean_price(os_e.get_text(strip=True))
+            if price == float('inf'):
+                m = re.search(r'₹\s*([\d,]+)', card.get_text())
+                if m:
+                    price = clean_price(m.group(1))
             if price == float('inf'):
                 return None
-            rating = "N/A"
-            el = card.select_one('span.a-icon-alt')
-            if el:
-                m = RE_RATING_INLINE.search(el.get_text())
-                if m:
-                    rating = m.group(1)
-            link_el = card.select_one('a[href*="/dp/"]')
-            link = urljoin("https://www.amazon.in", link_el['href']) if link_el else url
-            img_el = card.select_one('img.s-image')
-            img = img_el.get('src', '') if img_el else ''
-            return {"price": price, "display_price": _fmt(price), "rating": rating, "link": link, "title": title[:80], "image": img}
-        for card in organic + sponsored:
-            r = _parse(card)
+
+            print(f"  [Amazon] Candidate: ₹{price:,.0f} | {title_text[:60]}")
+            if not is_correct_product(query, title_text):
+                return None
+
+            rating_val = "N/A"
+            for sel in ['span.a-icon-alt', 'i[class*="a-star"] span']:
+                elem = card.select_one(sel)
+                if elem:
+                    m = re.search(r'([1-5]\.\d)', elem.get_text())
+                    if m:
+                        rating_val = m.group(1)
+                        break
+
+            link_elem = card.select_one('a[href*="/dp/"]')
+            link = urljoin("https://www.amazon.in", link_elem.get('href', '#')) if link_elem else url
+            img_elem = card.select_one('img.s-image')
+            img = img_elem.get('src', '') if img_elem else ''
+            print(f"  [Amazon] ✅ {title_text[:50]} @ ₹{price:,.0f} ⭐{rating_val}")
+            return {"price": price, "display_price": f"₹{price:,.0f}",
+                    "rating": rating_val, "link": link, "title": title_text[:70], "image": img}
+
+        for card in [c for c in cards if not is_sponsored(c)]:
+            r = parse_card(card)
             if r:
-                print(f"  [Amazon] ✅ {r['title'][:50]} @ {r['display_price']}")
                 return r
+        print("  [Amazon] Trying sponsored...")
+        for card in [c for c in cards if is_sponsored(c)]:
+            r = parse_card(card)
+            if r:
+                return r
+
     except Exception as e:
         print(f"  [Amazon] Error: {e}")
     return None
